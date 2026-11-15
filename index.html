@@ -713,7 +713,8 @@
         bgMusic.volume = 0.25;
         const attackSounds = {
             sabotage: new Audio(soundPath('Alarm Sound Effect.mp3')),
-            steal: new Audio(soundPath('Police - Sound Effect (HD).mp3'))
+            steal: new Audio(soundPath('Police - Sound Effect (HD).mp3')),
+            hijack: new Audio(soundPath('Alarm Sound Effect.mp3'))
         };
         Object.values(attackSounds).forEach(audio => { audio.volume = 0.65; });
         let audioEnabled = true;
@@ -721,7 +722,36 @@
         function startGameMusic() {
             if (audioEnabled && currentRoomCode && bgMusic.paused) bgMusic.play().catch(() => {});
         }
-        document.addEventListener('click', startGameMusic);
+        let audioUnlocked = false;
+        let audioContext = null;
+        function unlockGameAudio() {
+            if (!audioEnabled) return;
+            if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext) audioContext.resume().catch(() => {});
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                Object.values(attackSounds).forEach(audio => {
+                    audio.muted = true;
+                    audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.muted = false; }).catch(() => { audio.muted = false; audioUnlocked = false; });
+                });
+            }
+            startGameMusic();
+        }
+        document.addEventListener('click', unlockGameAudio, true);
+        function fallbackAlert() {
+            if (!audioEnabled || !audioContext || audioContext.state !== 'running') return;
+            for (let i=0; i<3; i++) {
+                const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+                const t = audioContext.currentTime + i * .19;
+                osc.frequency.value = i % 2 ? 520 : 780;
+                gain.gain.setValueAtTime(.12, t);
+                gain.gain.exponentialRampToValueAtTime(.001, t+.16);
+                osc.connect(gain); gain.connect(audioContext.destination);
+                osc.start(t); osc.stop(t+.17);
+            }
+        }
         window.toggleGameAudio = function() {
             audioEnabled = !audioEnabled;
             const btn = document.getElementById('audio-toggle');
@@ -733,17 +763,43 @@
                 Object.values(attackSounds).forEach(audio => { audio.pause(); audio.currentTime = 0; });
             }
         };
+        function makeAttack(kind, me, target) {
+            return { id: crypto.randomUUID(), kind, at: Date.now(), actor: me.uid, actorName: me.name, victim: target.uid, victimName: target.name };
+        }
         function checkAttackAudio(me) {
-            const event = me && me.attackNotice;
-            if (!event || !event.id || heardAttacks.has(event.id)) return;
-            heardAttacks.add(event.id);
-            if (Date.now() - event.at > 30000) return;
-            const audio = attackSounds[event.kind];
-            if (audioEnabled && audio) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
+            if (!me) return;
+            for (const player of Object.values(roomPlayers)) {
+                const event = player.attackNotice;
+                if (!event || !event.id || heardAttacks.has(event.id)) continue;
+                heardAttacks.add(event.id);
+                if (Date.now() - event.at > 30000) continue;
+                if (event.kind !== 'hijack' && me.uid !== event.actor && me.uid !== event.victim) continue;
+                const audio = attackSounds[event.kind];
+                if (audioEnabled && audio) {
+                    audio.muted = false;
+                    audio.currentTime = 0;
+                    audio.play().catch(fallbackAlert);
+                }
+                const labels = { hijack: '🏴‍☠️ KAPAL DIBAJAK!', steal: '🚨 PENCURIAN IKAN!', sabotage: '💣 SABOTASE KAPAL!' };
+                const verbs = { hijack: ' membajak kapal ', steal: ' mencuri ikan dari ', sabotage: ' menyabotase kapal ' };
+                if (!labels[event.kind]) continue;
+                const panel = document.createElement('div');
+                panel.className = 'bg-slate-900 text-white rounded-2xl shadow-2xl border-2 border-amber-400 p-4 mb-2 pointer-events-auto';
+                const heading = document.createElement('div');
+                heading.className = 'font-game text-amber-300 font-bold text-lg';
+                heading.textContent = labels[event.kind];
+                const message = document.createElement('p');
+                message.className = 'text-sm mt-1';
+                message.textContent = (event.actorName || 'Kapten') + verbs[event.kind] + (event.victimName || 'kapten lain') + '!';
+                const close = document.createElement('button');
+                close.className = 'mt-2 text-xs font-bold bg-white/20 rounded-lg px-3 py-2';
+                close.textContent = 'Tutup';
+                close.onclick = () => panel.remove();
+                panel.append(heading,message,close);
+                document.getElementById('sea-alerts').prepend(panel);
+                setTimeout(() => panel.remove(), 7000);
+                if (me.uid === event.victim && navigator.vibrate) navigator.vibrate([150,80,150]);
             }
-            showToast(event.kind === 'steal' ? '🏴‍☠️ Ikanmu berhasil dicuri!' : '💣 Kapalmu terkena sabotase!', 'warning');
         }
 
         function getMe() {
@@ -1532,6 +1588,7 @@
                         energy: Math.min(myOldBoat.maxEnergy, target.energy || 50),
                         avatar: myOldBoat.avatar,
                         cargo: targetNewCargo,
+                        attackNotice: makeAttack("hijack", me, target),
                         hijackedFrom: null,
                         updatedAt: Date.now(),
                         lastEvent: `⚔️ DRASTIS! ${me.name} membajak & menukar kapalnya dengan Kapal Lv.${targetBoat.boatLevel} milik ${target.name}!`
@@ -1551,7 +1608,7 @@
                     if (avail < stolenFish.slots) {
                         showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
                     } else {
-                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now(), attackNotice: { id: crypto.randomUUID(), kind: "steal", at: Date.now() } });
+                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now(), attackNotice: makeAttack("steal", me, target) });
                         await syncPlayerUpdate(me.uid, {
                             cargo: [...(me.cargo || []), stolenFish],
                             updatedAt: Date.now(),
@@ -1568,7 +1625,7 @@
                     const newEnergy = Math.max(0, (target.energy || 0) - 30);
                     await syncPlayerUpdate(target.uid, {
                         energy: newEnergy,
-                        attackNotice: { id: crypto.randomUUID(), kind: "sabotage", at: Date.now() },
+                        attackNotice: makeAttack("sabotage", me, target),
                         updatedAt: Date.now(),
                         lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
                     });
@@ -1749,5 +1806,6 @@
             }, 3500);
         }
     </script>
+    <div id="sea-alerts" aria-live="assertive" class="fixed top-24 left-3 right-3 sm:left-auto sm:w-80 z-[100] pointer-events-none max-h-[55vh] overflow-auto"></div>
 </body>
 </html>
