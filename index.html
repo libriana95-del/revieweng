@@ -69,10 +69,10 @@
                 </div>
                 <button onclick="spawnClass39Bots()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow">
                     <span>🤖</span> <span>Tes 39 Siswa</span>
-                    <span id="player-count-badge">Lobby Multiplayer</span>
                 </button>
-                <button onclick="testSeaAlert()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold shadow">🔔 Tes Alert & Suara</button>
-                <button id="audio-toggle" onclick="toggleGameAudio()" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-600" aria-pressed="true">🔊 Audio ON</button>
+                <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
+                    <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
+                </button>
                 <button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
                     <span>📖</span> <span>Buku Materi</span>
                 </button>
@@ -372,7 +372,7 @@
                     🤖 Simulasi Kelas Penuh (39 Siswa Sekaligus)
                 </button>
             </div>
-            <p id="lobby-status-msg" class="text-[11px] text-center text-slate-400 mt-3">V6 · Memulai game...</p>
+            <p id="lobby-status-msg" class="text-[11px] text-center text-slate-400 mt-3">Menghubungkan ke server pelabuhan...</p>
         </div>
     </div>
 
@@ -515,75 +515,16 @@
     <!-- Custom Toast / Notification Banner (No alert() used) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-    <!-- MODAL: FISH CATCH POP-UP WITH IMAGE & ENGLISH FUN FACT -->
-    <div id="fish-catch-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-sky-50 to-white text-slate-800 rounded-3xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(14,165,233,0.55)] border-4 border-sky-400 text-center relative overflow-hidden">
-            <span id="catch-size-badge" class="inline-block bg-emerald-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                🐋 TANGKAPAN RAKSASA • 3 SLOT
-            </span>
-            <h3 class="font-game text-2xl font-bold text-sky-950 mt-2">🎉 Ikan Berhasil Ditangkap!</h3>
-            <p id="catch-speed-note" class="text-xs text-slate-500 font-semibold mt-0.5">Dijawab dalam 4.2 detik!</p>
-
-            <!-- Fish Image Display -->
-            <div id="catch-fish-visual" class="my-4 mx-auto w-36 h-36 bg-sky-100/80 rounded-3xl border-2 border-sky-200 flex items-center justify-center p-3 shadow-inner">
-                <!-- PNG or Emoji rendered dynamically -->
-            </div>
-
-            <h4 id="catch-fish-name" class="font-game text-xl font-bold text-slate-900">Tuna Sirip Biru Raksasa</h4>
-            <div class="mt-1 inline-flex items-center gap-2 bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 rounded-full text-xs font-extrabold">
-                <span>Estimasi Harga Jual:</span>
-                <span>🪙 <span id="catch-fish-price">85</span> Koin</span>
-            </div>
-
-            <!-- English Fun Fact Box -->
-            <div class="mt-4 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3.5 text-left">
-                <div class="flex items-center gap-1.5 text-indigo-800 font-game font-bold text-xs uppercase tracking-wider mb-1">
-                    <span>💡</span> <span>Did You Know? (Fun Fact)</span>
-                </div>
-                <p id="catch-fish-funfact" class="text-xs sm:text-sm text-slate-700 leading-relaxed italic">
-                    "Bluefin tuna can swim as fast as 70 kilometers per hour across entire oceans!"
-                </p>
-            </div>
-
-            <button onclick="closeFishCatchModal()" class="mt-5 w-full bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-game font-bold py-3 rounded-2xl text-sm shadow-lg transition">
-                Simpan ke Palka Kapal! ⛵
-            </button>
-        </div>
-    </div>
-
-    <!-- GLOBAL EMERGENCY POP-UP MODAL (MUNCAR DI LAYAR SEMUA SISWA SAAT BAJAK/CURI/SABOTASE) -->
-    <div id="global-alert-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-        <div id="global-alert-card" class="bg-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(245,158,11,0.6)] border-4 border-amber-400 text-center transform transition-all">
-            <div id="global-alert-icon" class="text-6xl mb-2 animate-bounce">🏴‍☠️</div>
-            <span id="global-alert-badge" class="inline-block bg-rose-600 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-2">PERINGATAN LAUT</span>
-            <h3 id="global-alert-title" class="font-game text-2xl font-bold text-amber-300">KAPAL DIBAJAK!</h3>
-            <p id="global-alert-message" class="text-sm sm:text-base text-slate-100 mt-2 leading-relaxed font-medium">
-                Kapten A baru saja membajak kapal milik Kapten B!
-            </p>
-            <div id="global-alert-sub" class="mt-3 bg-white/10 rounded-xl p-2.5 text-xs text-sky-200 font-semibold">
-                Semua kapten di ruangan menerima sinyal darurat ini!
-            </div>
-            <button onclick="closeGlobalAlertModal()" class="mt-5 w-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-game font-bold py-3 rounded-2xl text-sm shadow-lg transition">
-                Siap, Mengerti!
-            </button>
-        </div>
-    </div>
-
-    <script>
-        window.addEventListener('error', function(e) {
-            var el = document.getElementById('lobby-status-msg');
-            if (el && e.message) el.textContent = 'V6 — Error: ' + e.message;
-        });
-    </script>
-    <script>
-        let initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-fisher-quest';
-        let firebaseConfig = null;
-        try { if (typeof __firebase_config !== 'undefined') firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config; } catch(e) { console.warn(e); }
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
         let app = null;
         let auth = null;
@@ -593,23 +534,14 @@
         let unsubscribeRoom = null;
         let selectedAvatar = '⛵';
         let firestoreEnabled = false;
-        let localChannel = null;
-        try { if (typeof BroadcastChannel !== 'undefined') localChannel = new BroadcastChannel('english_fisher_quest_sync'); } catch(e) { console.warn(e); }
+        const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('english_fisher_quest_sync') : null;
 
         async function initFirebase() {
             if (!firebaseConfig) {
-                document.getElementById('lobby-status-msg').textContent = "V6 · Siap bermain! Mode simulasi lokal aktif.";
+                document.getElementById('lobby-status-msg').textContent = "✅ Mode Lokal & Multi-Tab Aktif! Masukkan nama & kode ruang.";
                 return;
             }
             try {
-                const [appModule, authModule, dbModule] = await Promise.all([
-                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
-                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
-                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")
-                ]);
-                ({initializeApp} = appModule);
-                ({getAuth, signInAnonymously, signInWithCustomToken} = authModule);
-                ({getFirestore, doc, setDoc, onSnapshot, collection} = dbModule);
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -737,102 +669,17 @@
 
         const FISH_CATALOG = {
             large: [
-                {
-                    name: "Tuna Sirip Biru Raksasa",
-                    icon: "🐋",
-                    image: "assets/fish/tuna.png",
-                    basePrice: 85,
-                    slots: 3,
-                    sizeLabel: "Besar",
-                    funFact: "Bluefin tuna are warm-blooded fish that can swim up to 70 km/h and dive over 1,000 meters deep!"
-                },
-                {
-                    name: "Marlin Raja Samudra",
-                    icon: "🦈",
-                    image: "assets/fish/marlin.png",
-                    basePrice: 95,
-                    slots: 3,
-                    sizeLabel: "Besar",
-                    funFact: "The Blue Marlin uses its long, spear-like upper jaw to stun schools of fast-swimming fish while hunting."
-                }
+                { name: "Tuna Sirip Biru Raksasa", icon: "🐋", image: "assets/fish/tuna.png", basePrice: 85, slots: 3, sizeLabel: "Besar" },
+                { name: "Marlin Raja Samudra", icon: "🦈", image: "assets/fish/marlin.png", basePrice: 95, slots: 3, sizeLabel: "Besar" }
             ],
             medium: [
-                {
-                    name: "Kakap Merah Segar",
-                    icon: "🐟",
-                    image: "assets/fish/snapper.png",
-                    basePrice: 45,
-                    slots: 2,
-                    sizeLabel: "Sedang",
-                    funFact: "Red snappers can live for more than 50 years in deep coral reefs and rocky ocean habitats."
-                },
-                {
-                    name: "Kerapu Karang",
-                    icon: "🐡",
-                    image: "assets/fish/grouper.png",
-                    basePrice: 50,
-                    slots: 2,
-                    sizeLabel: "Sedang",
-                    funFact: "Groupers swallow their prey whole instead of biting pieces off, using their powerful gills like a vacuum!"
-                }
+                { name: "Kakap Merah Segar", icon: "🐟", image: "assets/fish/snapper.png", basePrice: 45, slots: 2, sizeLabel: "Sedang" },
+                { name: "Kerapu Karang", icon: "🐡", image: "assets/fish/grouper.png", basePrice: 50, slots: 2, sizeLabel: "Sedang" }
             ],
             small: [
-                {
-                    name: "Ikan Teri & Udang",
-                    icon: "🦐",
-                    image: "assets/fish/shrimp.png",
-                    basePrice: 20,
-                    slots: 1,
-                    sizeLabel: "Kecil",
-                    funFact: "A shrimp's heart is actually located inside its head, right behind its eyes!"
-                },
-                {
-                    name: "Sarden Kecil",
-                    icon: "🐠",
-                    image: "assets/fish/sardine.png",
-                    basePrice: 22,
-                    slots: 1,
-                    sizeLabel: "Kecil",
-                    funFact: "Sardines travel in giant shimmering 'bait balls' of thousands of fish to confuse ocean predators."
-                }
+                { name: "Ikan Teri & Udang", icon: "🦐", image: "assets/fish/shrimp.png", basePrice: 20, slots: 1, sizeLabel: "Kecil" },
+                { name: "Sarden Kecil", icon: "🐠", image: "assets/fish/sardine.png", basePrice: 22, slots: 1, sizeLabel: "Kecil" }
             ]
-        };
-
-        // Helper untuk merender PNG dari folder assets/fish/ dengan fallback otomatis ke emoji
-        function renderFishVisual(fish, sizeClass = "w-8 h-8") {
-            const imgPath = fish.image || "";
-            const fallbackEmoji = fish.icon || "🐟";
-            if (!imgPath) return `<span class="text-2xl">${fallbackEmoji}</span>`;
-            return `
-                <img src="${imgPath}" alt="${fish.name}" class="${sizeClass} object-contain shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                <span style="display:none;" class="text-2xl">${fallbackEmoji}</span>
-            `;
-        }
-
-        function showFishCatchPopup(fish, elapsedSeconds) {
-            const sizeBadgeColors = {
-                Besar: "bg-emerald-500 text-white",
-                Sedang: "bg-amber-500 text-slate-950",
-                Kecil: "bg-sky-500 text-white"
-            };
-            const badgeEl = document.getElementById('catch-size-badge');
-            badgeEl.className = `inline-block ${sizeBadgeColors[fish.sizeLabel] || 'bg-sky-500 text-white'} text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm`;
-            badgeEl.textContent = `${fish.icon} UKURAN ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;
-
-            document.getElementById('catch-speed-note').textContent = `Kecepatan menjawab: ${elapsedSeconds.toFixed(1)} detik!`;
-            document.getElementById('catch-fish-visual').innerHTML = `
-                <img src="${fish.image}" alt="${fish.name}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <span style="display:none;" class="text-7xl">${fish.icon}</span>
-            `;
-            document.getElementById('catch-fish-name').textContent = fish.name;
-            document.getElementById('catch-fish-price').textContent = fish.price;
-            document.getElementById('catch-fish-funfact').textContent = `"${fish.funFact || 'Oceans cover more than 70 percent of Earth’s surface and are home to millions of fascinating species!'}"`;
-
-            document.getElementById('fish-catch-modal').classList.remove('hidden');
-        }
-
-        window.closeFishCatchModal = function() {
-            document.getElementById('fish-catch-modal').classList.add('hidden');
         };
 
         // Helper untuk merender PNG dari folder assets/fish/ dengan fallback otomatis ke emoji
@@ -857,222 +704,6 @@
         let quizTimerInterval = null;
         let quizStartTime = 0;
         let currentInteractionMode = null;
-
-        // ==========================================
-        // 2B. GAME AUDIO & GLOBAL POP-UP ALERT ENGINE
-        // ==========================================
-        const soundPath = name => `assets/sounds/${encodeURIComponent(name)}`;
-        const bgMusic = new Audio(soundPath('One Piece Ending 1 - Memories - SLS Piano Cover.mp3'));
-        bgMusic.loop = true;
-        bgMusic.volume = 0.25;
-
-        const attackSounds = {
-            sabotage: new Audio(soundPath('Alarm Sound Effect.mp3')),
-            steal: new Audio(soundPath('Police - Sound Effect (HD).mp3')),
-            hijack: new Audio(soundPath('Alarm Sound Effect.mp3'))
-        };
-        Object.values(attackSounds).forEach(audio => {
-            audio.preload = 'auto';
-            audio.volume = 0.85;
-        });
-
-        let audioEnabled = true;
-        let audioUnlocked = false;
-        let audioContext = null;
-        let globalAlertTimer = null;
-        const heardAttacks = new Set();
-
-        function startGameMusic() {
-            if (audioEnabled && currentRoomCode && bgMusic.paused) {
-                bgMusic.play().catch(() => {});
-            }
-        }
-
-        function unlockGameAudio() {
-            if (!audioEnabled) return;
-            if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().catch(() => {});
-            }
-            if (!audioUnlocked) {
-                audioUnlocked = true;
-                Object.values(attackSounds).forEach(audio => {
-                    audio.load();
-                });
-            }
-            startGameMusic();
-        }
-        document.addEventListener('pointerdown', unlockGameAudio, true);
-        document.addEventListener('keydown', unlockGameAudio, true);
-
-        function playSynthesizedFallback(kind) {
-            if (!audioEnabled) return;
-            try {
-                if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (!audioContext) return;
-                if (audioContext.state === 'suspended') audioContext.resume();
-
-                const freqs = kind === 'steal' ? [660, 880, 660, 880] : [520, 780, 520, 780];
-                freqs.forEach((freq, i) => {
-                    const osc = audioContext.createOscillator();
-                    const gain = audioContext.createGain();
-                    const t = audioContext.currentTime + i * 0.18;
-                    osc.type = kind === 'steal' ? 'square' : 'sawtooth';
-                    osc.frequency.setValueAtTime(freq, t);
-                    gain.gain.setValueAtTime(0.14, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-                    osc.connect(gain);
-                    gain.connect(audioContext.destination);
-                    osc.start(t);
-                    osc.stop(t + 0.17);
-                });
-            } catch (_) {}
-        }
-
-        function playAttackSoundEffect(kind) {
-            if (!audioEnabled) return;
-            const audio = attackSounds[kind];
-            if (!audio) {
-                playSynthesizedFallback(kind);
-                return;
-            }
-            try {
-                audio.pause();
-                audio.currentTime = 0;
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(() => playSynthesizedFallback(kind));
-                }
-            } catch (_) {
-                playSynthesizedFallback(kind);
-            }
-        }
-
-        window.toggleGameAudio = function() {
-            audioEnabled = !audioEnabled;
-            const btn = document.getElementById('audio-toggle');
-            btn.textContent = audioEnabled ? '🔊 Audio ON' : '🔇 Audio OFF';
-            btn.setAttribute('aria-pressed', String(audioEnabled));
-            if (audioEnabled) {
-                unlockGameAudio();
-            } else {
-                bgMusic.pause();
-                Object.values(attackSounds).forEach(audio => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                });
-            }
-        };
-
-        window.closeGlobalAlertModal = function() {
-            document.getElementById('global-alert-modal').classList.add('hidden');
-            if (globalAlertTimer) clearTimeout(globalAlertTimer);
-        };
-
-        function showGlobalAttackPopup(event, me) {
-            const configs = {
-                hijack: {
-                    icon: '🏴‍☠️',
-                    badge: 'DARURAT PEMBAJAKAN KAPAL',
-                    title: 'KAPAL TELAH DIBAJAK!',
-                    border: 'border-purple-400',
-                    text: `${event.actorName} baru saja membajak & menukar kapal dengan milik ${event.victimName}!`
-                },
-                steal: {
-                    icon: '🚨',
-                    badge: 'SIRINE PENCURIAN IKAN',
-                    title: 'PENCURIAN DI LAUT!',
-                    border: 'border-rose-500',
-                    text: `${event.actorName} berhasil mencuri ikan ${event.detail ? '(' + event.detail + ') ' : ''}dari palka kapal ${event.victimName}!`
-                },
-                sabotage: {
-                    icon: '💣',
-                    badge: 'ALARM SABOTASE KAPAL',
-                    title: 'SABOTASE JARING!',
-                    border: 'border-amber-400',
-                    text: `${event.actorName} menyabotase jaring kapal milik ${event.victimName} (-30 Energi)!`
-                }
-            };
-
-            const cfg = configs[event.kind];
-            if (!cfg) return;
-
-            const isVictim = me && me.uid === event.victim;
-            const isActor = me && me.uid === event.actor;
-
-            const card = document.getElementById('global-alert-card');
-            card.className = `bg-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(245,158,11,0.65)] border-4 ${cfg.border} text-center transform transition-all`;
-            document.getElementById('global-alert-icon').textContent = cfg.icon;
-            document.getElementById('global-alert-badge').textContent = isVictim ? '⚠️ KAMU MENJADI TARGET!' : cfg.badge;
-            document.getElementById('global-alert-title').textContent = isVictim
-                ? (event.kind === 'hijack' ? 'KAPALMU DIBAJAK LAWAN!' : event.kind === 'steal' ? 'IKANMU DICURI LAWAN!' : 'KAPALMU DISABOTASE!')
-                : cfg.title;
-            document.getElementById('global-alert-message').textContent = cfg.text;
-            document.getElementById('global-alert-sub').textContent = isVictim
-                ? 'Segera balas atau pulihkan kondisimu di pelabuhan!'
-                : isActor
-                    ? 'Aksi kamu tersiar ke seluruh layar siswa di ruangan ini!'
-                    : 'Waspada! Semua kapten di ruangan melihat kejadian ini secara langsung.';
-
-            document.getElementById('global-alert-modal').classList.remove('hidden');
-
-            if (globalAlertTimer) clearTimeout(globalAlertTimer);
-            globalAlertTimer = setTimeout(() => {
-                window.closeGlobalAlertModal();
-            }, 6500);
-
-            if (isVictim && navigator.vibrate) {
-                try { navigator.vibrate([200, 100, 200]); } catch (_) {}
-            }
-        }
-
-        function createAttackEvent(kind, me, target, detail = '') {
-            return {
-                id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-                kind,
-                at: Date.now(),
-                actor: me.uid,
-                actorName: me.name,
-                victim: target.uid,
-                victimName: target.name,
-                detail
-            };
-        }
-
-        function triggerLocalAndBroadcastAttack(kind, me, target, detail = '') {
-            const event = createAttackEvent(kind, me, target, detail);
-            heardAttacks.add(event.id);
-            playAttackSoundEffect(kind);
-            showGlobalAttackPopup(event, me);
-            return event;
-        }
-
-        function checkAttackAudio(me) {
-            if (!me) return;
-            for (const player of Object.values(roomPlayers)) {
-                const event = player.attackNotice;
-                if (!event || !event.id || heardAttacks.has(event.id)) continue;
-                heardAttacks.add(event.id);
-                if (Date.now() - event.at > 35000) continue;
-
-                // Munculkan pop-up & suara di layar semua siswa di ruangan Firebase/Tab
-                playAttackSoundEffect(event.kind);
-                showGlobalAttackPopup(event, me);
-            }
-        }
-
-        window.testSeaAlert = function() {
-            unlockGameAudio();
-            const me = getMe() || { uid: 'test-self', name: 'Kapten Kamu' };
-            const demoTarget = { uid: 'alert-test', name: 'Kapten Dimas' };
-            const modes = ['hijack', 'steal', 'sabotage'];
-            const randomMode = modes[Math.floor(Math.random() * modes.length)];
-            triggerLocalAndBroadcastAttack(randomMode, me, demoTarget, 'Tuna Sirip Biru');
-        };
 
         function getMe() {
             return myUid ? roomPlayers[myUid] : null;
@@ -1137,15 +768,8 @@
             const roomEl = document.getElementById('input-room-code');
             if (!nameEl.value.trim()) nameEl.value = "Kapten Utama";
             if (!roomEl.value.trim()) roomEl.value = "KELAS39";
-            try {
-                await window.joinMultiplayerRoom();
-                if (getMe()) await window.spawnClass39Bots();
-                startGameMusic();
-            } catch (error) {
-                console.error("Simulation startup:", error);
-                document.getElementById('lobby-status-msg').textContent = "Simulasi gagal: " + error.message;
-                showToast("Simulasi gagal: " + error.message, "error");
-            }
+            await window.joinMultiplayerRoom();
+            await window.spawnClass39Bots();
         };
 
         window.spawnClass39Bots = async function() {
@@ -1254,7 +878,7 @@
                 }
             }
 
-            myUid = currentUser ? currentUser.uid : 'tab-' + (globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(0, 16);
+            myUid = currentUser ? currentUser.uid : 'tab-' + crypto.randomUUID().slice(0, 8);
             currentRoomCode = roomInput;
 
             const newPlayerState = {
@@ -1812,7 +1436,6 @@
                     price: finalPrice,
                     slots: template.slots,
                     sizeLabel: template.sizeLabel,
-                    funFact: template.funFact,
                     processed: false
                 };
 
@@ -1823,7 +1446,6 @@
                     lastEvent: `🎣 ${me.name} menangkap ${caughtFish.icon} ${caughtFish.name} (${caughtFish.sizeLabel}) dalam ${elapsed.toFixed(1)} detik!`
                 });
 
-                showFishCatchPopup(caughtFish, elapsed);
                 showToast(`Mantap (${elapsed.toFixed(1)}s)! Dapat ${caughtFish.icon} ${caughtFish.name} (🪙${caughtFish.price})!`, "success");
             } else if (activeQuiz.actionType === 'hijack') {
                 const target = roomPlayers[activeQuiz.targetUid];
@@ -1867,7 +1489,6 @@
                         energy: Math.min(myOldBoat.maxEnergy, target.energy || 50),
                         avatar: myOldBoat.avatar,
                         cargo: targetNewCargo,
-                        attackNotice: triggerLocalAndBroadcastAttack("hijack", me, target),
                         hijackedFrom: null,
                         updatedAt: Date.now(),
                         lastEvent: `⚔️ DRASTIS! ${me.name} membajak & menukar kapalnya dengan Kapal Lv.${targetBoat.boatLevel} milik ${target.name}!`
@@ -1887,11 +1508,7 @@
                     if (avail < stolenFish.slots) {
                         showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
                     } else {
-                        await syncPlayerUpdate(target.uid, {
-                            cargo: targetCargo,
-                            updatedAt: Date.now(),
-                            attackNotice: triggerLocalAndBroadcastAttack("steal", me, target, stolenFish.name)
-                        });
+                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now() });
                         await syncPlayerUpdate(me.uid, {
                             cargo: [...(me.cargo || []), stolenFish],
                             updatedAt: Date.now(),
@@ -1908,7 +1525,6 @@
                     const newEnergy = Math.max(0, (target.energy || 0) - 30);
                     await syncPlayerUpdate(target.uid, {
                         energy: newEnergy,
-                        attackNotice: triggerLocalAndBroadcastAttack("sabotage", me, target),
                         updatedAt: Date.now(),
                         lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
                     });
