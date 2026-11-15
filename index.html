@@ -73,6 +73,7 @@
                 <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
                     <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
                 </button>
+                <button onclick="testSeaAlert()" class="bg-amber-500 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold">🔔 Tes Alert (v3)</button>
                 <button id="audio-toggle" onclick="toggleGameAudio()" class="bg-slate-800 text-white px-3 py-1.5 rounded-xl text-xs font-bold" aria-pressed="true">🔊 Audio ON</button>
                 <button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
                     <span>📖</span> <span>Buku Materi</span>
@@ -764,7 +765,7 @@
             }
         };
         function makeAttack(kind, me, target) {
-            return { id: crypto.randomUUID(), kind, at: Date.now(), actor: me.uid, actorName: me.name, victim: target.uid, victimName: target.name };
+            return { id: (globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)), kind, at: Date.now(), actor: me.uid, actorName: me.name, victim: target.uid, victimName: target.name };
         }
         function checkAttackAudio(me) {
             if (!me) return;
@@ -775,11 +776,7 @@
                 if (Date.now() - event.at > 30000) continue;
                 if (event.kind !== 'hijack' && me.uid !== event.actor && me.uid !== event.victim) continue;
                 const audio = attackSounds[event.kind];
-                if (audioEnabled && audio) {
-                    audio.muted = false;
-                    audio.currentTime = 0;
-                    audio.play().catch(fallbackAlert);
-                }
+
                 const labels = { hijack: '🏴‍☠️ KAPAL DIBAJAK!', steal: '🚨 PENCURIAN IKAN!', sabotage: '💣 SABOTASE KAPAL!' };
                 const verbs = { hijack: ' membajak kapal ', steal: ' mencuri ikan dari ', sabotage: ' menyabotase kapal ' };
                 if (!labels[event.kind]) continue;
@@ -796,11 +793,30 @@
                 close.textContent = 'Tutup';
                 close.onclick = () => panel.remove();
                 panel.append(heading,message,close);
-                document.getElementById('sea-alerts').prepend(panel);
+                const holder = document.getElementById('sea-alerts');
+                holder.prepend(panel);
+                if (audioEnabled && audio) {
+                    try { audio.muted = false; audio.currentTime = 0; audio.play().catch(() => { try { fallbackAlert(); } catch (_) {} }); } catch (_) { try { fallbackAlert(); } catch (_) {} }
+                }
                 setTimeout(() => panel.remove(), 7000);
-                if (me.uid === event.victim && navigator.vibrate) navigator.vibrate([150,80,150]);
+                if (me.uid === event.victim && navigator.vibrate) { try { navigator.vibrate([150,80,150]); } catch (_) {} }
             }
         }
+
+        function immediateAttack(kind, me, target) {
+            const notice = makeAttack(kind, me, target);
+            const old = target.attackNotice;
+            target.attackNotice = notice;
+            try { checkAttackAudio(me); } finally { target.attackNotice = old; }
+            return notice;
+        }
+        window.testSeaAlert = function() {
+            unlockGameAudio();
+            const me = getMe() || { uid: 'test-self', name: 'Kapten Kamu' };
+            const test = { uid: 'alert-test', name: 'Kapten Demo' };
+            roomPlayers[test.uid] = test;
+            try { immediateAttack('hijack', me, test); } finally { delete roomPlayers[test.uid]; }
+        };
 
         function getMe() {
             return myUid ? roomPlayers[myUid] : null;
@@ -1588,7 +1604,7 @@
                         energy: Math.min(myOldBoat.maxEnergy, target.energy || 50),
                         avatar: myOldBoat.avatar,
                         cargo: targetNewCargo,
-                        attackNotice: makeAttack("hijack", me, target),
+                        attackNotice: immediateAttack("hijack", me, target),
                         hijackedFrom: null,
                         updatedAt: Date.now(),
                         lastEvent: `⚔️ DRASTIS! ${me.name} membajak & menukar kapalnya dengan Kapal Lv.${targetBoat.boatLevel} milik ${target.name}!`
@@ -1608,7 +1624,7 @@
                     if (avail < stolenFish.slots) {
                         showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
                     } else {
-                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now(), attackNotice: makeAttack("steal", me, target) });
+                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now(), attackNotice: immediateAttack("steal", me, target) });
                         await syncPlayerUpdate(me.uid, {
                             cargo: [...(me.cargo || []), stolenFish],
                             updatedAt: Date.now(),
@@ -1625,7 +1641,7 @@
                     const newEnergy = Math.max(0, (target.energy || 0) - 30);
                     await syncPlayerUpdate(target.uid, {
                         energy: newEnergy,
-                        attackNotice: makeAttack("sabotage", me, target),
+                        attackNotice: immediateAttack("sabotage", me, target),
                         updatedAt: Date.now(),
                         lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
                     });
@@ -1806,6 +1822,6 @@
             }, 3500);
         }
     </script>
-    <div id="sea-alerts" aria-live="assertive" class="fixed top-24 left-3 right-3 sm:left-auto sm:w-80 z-[100] pointer-events-none max-h-[55vh] overflow-auto"></div>
+    <div id="sea-alerts" aria-live="assertive" style="position:fixed;top:90px;left:12px;right:12px;z-index:2147483647;pointer-events:none;max-height:55vh;overflow:auto"></div>
 </body>
 </html>
