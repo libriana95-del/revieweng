@@ -515,16 +515,13 @@
     <!-- Custom Toast / Notification Banner (No alert() used) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
+        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection;
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-fisher-quest';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        let firebaseConfig=null; try { if(typeof __firebase_config !== 'undefined') firebaseConfig=typeof __firebase_config==='string'?JSON.parse(__firebase_config):__firebase_config; }catch(e){}
 
         let app = null;
         let auth = null;
@@ -542,6 +539,9 @@
                 return;
             }
             try {
+                ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
+                ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
+                ({getFirestore,doc,setDoc,onSnapshot,collection}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -746,7 +746,7 @@
                 if (msg && msg.roomCode === currentRoomCode && msg.players) {
                     roomPlayers = { ...roomPlayers, ...msg.players };
                     if (msg.latestLog) {
-                        document.getElementById('live-activity-log').textContent = msg.latestLog;
+                        document.getElementById('live-activity-log').textContent = msg.latestLog; attackAlert(msg.latestLog);
                     }
                     updateAllUI();
                 }
@@ -754,6 +754,7 @@
         }
 
         function broadcastLocalState(latestLog = null) {
+            if(latestLog) attackAlert(latestLog);
             if (localChannel && currentRoomCode) {
                 localChannel.postMessage({
                     roomCode: currentRoomCode,
@@ -764,6 +765,7 @@
         }
 
         window.joinWithDemoBots = async function() {
+            unlockAudio();
             const nameEl = document.getElementById('input-player-name');
             const roomEl = document.getElementById('input-room-code');
             if (!nameEl.value.trim()) nameEl.value = "Kapten Utama";
@@ -857,6 +859,7 @@
         };
 
         window.joinMultiplayerRoom = async function() {
+            unlockAudio();
             const nameInput = document.getElementById('input-player-name').value.trim();
             const roomInput = document.getElementById('input-room-code').value.trim().toUpperCase();
 
@@ -878,7 +881,7 @@
                 }
             }
 
-            myUid = currentUser ? currentUser.uid : 'tab-' + crypto.randomUUID().slice(0, 8);
+            myUid = currentUser ? currentUser.uid : 'tab-' + (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)).slice(0,8);
             currentRoomCode = roomInput;
 
             const newPlayerState = {
@@ -922,7 +925,7 @@
 
                         roomPlayers = { ...roomPlayers, ...updatedPlayers };
                         if (latestLog) {
-                            document.getElementById('live-activity-log').textContent = latestLog;
+                            document.getElementById('live-activity-log').textContent = latestLog; attackAlert(latestLog);
                         }
                         updateAllUI();
                     }, () => {
@@ -944,6 +947,7 @@
             document.getElementById('room-badge-box').classList.remove('hidden');
             document.getElementById('active-room-code').textContent = currentRoomCode;
             showToast(`Berhasil bergabung ke Ruangan ${currentRoomCode}!`, "success");
+            startSeaEvents();
         };
 
         async function syncPlayerUpdate(targetUid, partialData) {
@@ -1704,6 +1708,52 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
+
+        let audioCtx, eventTimer, seaPending=false, lastAlert='', lastAlertAt=0;
+        const alarmAudio=new Audio(encodeURI('assets/sounds/Alarm Sound Effect.mp3'));
+        const policeAudio=new Audio(encodeURI('assets/sounds/Police - Sound Effect (HD).mp3'));
+        function unlockAudio(){
+            try { audioCtx ||= new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume().catch(()=>{}); } catch(e){}
+        }
+        document.addEventListener('pointerdown',unlockAudio);
+        function beep(){
+            try {if(!audioCtx || audioCtx.state!=='running')return;
+            for(let i=0;i<6;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime+i*.22;o.frequency.value=i%2?660:880;g.gain.value=.12;o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+.18);}
+            }catch(e){}
+        }
+        function playAlarm(theft=false){
+            try{const a=theft?policeAudio:alarmAudio;a.currentTime=0;Promise.resolve(a.play()).catch(beep);}catch(e){beep();}
+        }
+        function alertPanel(title,msg,emergency=false,canPort=false){
+            let panel=document.getElementById('sea-alert-panel');
+            if(!panel){panel=document.createElement('div');panel.id='sea-alert-panel';document.body.appendChild(panel);}
+            Object.assign(panel.style,{position:'fixed',top:'12px',left:'50%',transform:'translateX(-50%)',width:'min(92vw,440px)',padding:'16px',borderRadius:'18px',boxShadow:'0 8px 30px #0007',zIndex:'99999',color:'white',background:emergency?'#991b1b':'#065f46',fontFamily:'sans-serif'});
+            panel.replaceChildren();
+            const h=document.createElement('strong');h.textContent=title;panel.appendChild(h);
+            const p=document.createElement('p');p.textContent=msg;panel.appendChild(p);
+            if(canPort){const b=document.createElement('button');b.textContent='⚓ Kembali ke pelabuhan';b.style.cssText='background:white;color:#991b1b;padding:8px;border-radius:8px;margin:8px 8px 0 0';b.onclick=()=>window.setLocation('port');panel.appendChild(b);}
+            const x=document.createElement('button');x.textContent='Tutup';x.style.cssText='padding:8px;margin-top:8px;border:1px solid white;border-radius:8px';x.onclick=()=>panel.remove();panel.appendChild(x);
+            setTimeout(()=>{if(panel.firstChild===h)panel.remove();},canPort?15000:7000);
+        }
+        function attackAlert(log){
+            if(!/membajak|menyabotase|mencuri/.test(log))return;
+            if(log===lastAlert&&Date.now()-lastAlertAt<10000)return;
+            lastAlert=log;lastAlertAt=Date.now();
+            const theft=log.includes('mencuri');playAlarm(theft);alertPanel(theft?'🚨 FISH THEFT':log.includes('membajak')?'🚨 SHIP HIJACKING':'🚨 SABOTAGE',log,true);
+        }
+        function startSeaEvents(){
+            clearInterval(eventTimer);eventTimer=setInterval(runSeaEvent,90000);
+        }
+        function runSeaEvent(){
+            const me=getMe();if(!me||seaPending||activeQuiz||currentLocation!=='sea')return;
+            const pick=Math.floor(Math.random()*6);
+            if(pick>=4){const coins=pick===4?35:20;alertPanel(pick===4?'✨ LOST TREASURE':'🐟 FISH MIGRATION','Bonus '+coins+' koin!');syncPlayerUpdate(me.uid,{coins:me.coins+coins,updatedAt:Date.now()});return;}
+            const names=['THUNDERSTORM','WHIRLPOOL','HEAVY FOG','EXTREME WAVES'];
+            seaPending=true;playAlarm();alertPanel('⚠️ '+names[pick],'Bencana tiba dalam 15 detik. Berlindung di pelabuhan atau kehilangan energi!',true,true);
+            const uid=me.uid;setTimeout(()=>{seaPending=false;const p=getMe();if(!p||p.uid!==uid)return;if(currentLocation==='port'){showToast('Kapal aman di pelabuhan!','success');return;}const damage=[20,15,10,25][pick];syncPlayerUpdate(uid,{energy:Math.max(0,p.energy-damage),updatedAt:Date.now()});alertPanel('🌊 '+names[pick],'-'+damage+' energi',true);},15000);
+        }
+        window.testSeaAlarm=()=>{unlockAudio();playAlarm();alertPanel('🚨 ALARM TEST','Tes suara darurat.',true);};
     </script>
+<button onclick="testSeaAlarm()" style="position:fixed;bottom:8px;right:8px;z-index:40;background:#0f172a;color:white;border-radius:10px;padding:7px;font-size:11px">🔊 Tes alarm</button>
 </body>
 </html>
