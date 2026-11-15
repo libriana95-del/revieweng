@@ -557,7 +557,7 @@
     </div>
 
     <script>
-        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc;
+        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc,runTransaction;
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
@@ -582,7 +582,7 @@
             try {
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
-                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
+                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc,runTransaction}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -1332,7 +1332,7 @@ window.joinMultiplayerRoom = async function() {
         // ==========================================
         const questionHistory={};
 function nextQuestion(pool,topic){const k='efq-bank150-'+(getMe()?.name||getMe()?.uid||'guest');let h=questionHistory[k];if(!h){try{h=JSON.parse(localStorage.getItem(k)||'{}')}catch(e){h={}}questionHistory[k]=h}const ids=pool.map((q,i)=>String(q.id??(topic+'-'+i)));let available=ids.filter(id=>!(h.used||[]).includes(id));const recent=h.recent||[];if(!available.length){h.used=(h.used||[]).filter(id=>!ids.includes(id));available=ids.slice()}const safe=available.filter(id=>!recent.slice(-Math.min(20,ids.length-1)).includes(id));if(safe.length)available=safe;const id=available[Math.floor(Math.random()*available.length)];h.used=[...(h.used||[]),id];h.recent=[...recent,id].slice(-150);try{localStorage.setItem(k,JSON.stringify(h))}catch(e){}const q=pool[ids.indexOf(id)],opts=q.options.map((v,i)=>({v,i}));for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return {...q,options:opts.map(x=>x.v),answer:opts.findIndex(x=>x.i===q.answer)}}
-function openQuizChallenge(topic, actionType, targetUid) { if(['hijack','steal','sabotage','coop'].includes(actionType)){showToast('PvP disabled during Firebase connection test','info');return;}
+function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())return;
             const pool = topic.startsWith("cook")?cookBank[Number(topic.slice(4))]:QUESTION_BANK[topic];
             const qObj = nextQuestion(pool,topic);
 
@@ -1404,7 +1404,26 @@ function openQuizChallenge(topic, actionType, targetUid) { if(['hijack','steal',
             }, 100);
         }
 
-        window.submitQuizAnswer = async function(selectedIdx) {
+        
+async function performPvp(kind,target){
+ if(classBlocked()||!firestoreEnabled||target===myUid)throw Error('Unavailable');
+ const base=['artifacts',appId,'public','data','room_'+currentRoomCode];
+ const ar=doc(db,...base,myUid),br=doc(db,...base,target);
+ await runTransaction(db,async tx=>{
+ const as=await tx.get(ar),bs=await tx.get(br);if(!as.exists()||!bs.exists())throw Error('Player unavailable');
+ const a=as.data(),b=bs.data(),now=Date.now(),cargo=x=>[...(x.cargo||[])],used=x=>x.reduce((n,f)=>n+(f.slots||1),0);
+ if(kind!=='coop'&&(b.guardUntil||0)>now)throw Error('Ship protected by guard');
+ let ap={},bp={};
+ if(kind==='steal'){const bc=cargo(b),ac=cargo(a),fish=bc.pop();if(!fish||used(ac)+fish.slots>a.maxCargo)throw Error('No fish or cargo full');ap.cargo=[...ac,fish];bp.cargo=bc}
+ if(kind==='sabotage')bp.energy=Math.max(0,b.energy-30);
+ if(kind==='coop'){ap={coins:a.coins+45,energy:Math.min(a.maxEnergy,a.energy+25)};bp={coins:b.coins+45,energy:Math.min(b.maxEnergy,b.energy+25)}}
+ if(kind==='hijack'){const specs=x=>({boatLevel:x.boatLevel,maxCargo:x.maxCargo,maxEnergy:x.maxEnergy,avatar:x.avatar});if(used(cargo(a))>b.maxCargo||used(cargo(b))>a.maxCargo)throw Error('Sell cargo before swapping ships');ap={...specs(b),energy:Math.min(b.maxEnergy,a.energy),hijackedFrom:b.name};bp={...specs(a),energy:Math.min(a.maxEnergy,b.energy),hijackedFrom:null}}
+ const log=({'hijack':'⚔️ '+a.name+' membajak kapal '+b.name,'steal':'🏴‍☠️ '+a.name+' mencuri ikan dari kapal '+b.name,'sabotage':'💣 '+a.name+' menyabotase kapal '+b.name,'coop':'🤝 '+a.name+' & '+b.name+' kerja sama'})[kind];
+ tx.update(ar,{...ap,updatedAt:now,pvpAt:now,pvpTarget:target,pvpKind:kind});tx.update(br,{...bp,updatedAt:now,lastEvent:log,pvpBy:myUid,pvpAt:now,pvpKind:kind});
+ });
+}
+
+window.submitQuizAnswer = async function(selectedIdx) {
             if (!activeQuiz || classBlocked()) return;
             clearInterval(quizTimerInterval);
             document.getElementById('quiz-modal').classList.add('hidden');
@@ -1468,108 +1487,12 @@ if (activeQuiz.actionType === 'fishing') {
                 });
 
                 showToast(`Mantap (${elapsed.toFixed(1)}s)! Dapat ${caughtFish.icon} ${caughtFish.name} (🪙${caughtFish.price})!`, "success");
-            } else if (activeQuiz.actionType === 'hijack') {
-                const target = roomPlayers[activeQuiz.targetUid];
-                if (!isCorrect) {
-                    showToast("Pembajakan gagal! Awak kapal lawan berhasil mempertahankan kapalnya.", "error");
-                } else if (target) {
-                    // Swap boat specs (boatLevel, maxCargo, maxEnergy, avatar) between me and target
-                    const myOldBoat = {
-                        boatLevel: me.boatLevel || 1,
-                        maxCargo: me.maxCargo || 5,
-                        maxEnergy: me.maxEnergy || 100,
-                        avatar: me.avatar || '⛵'
-                    };
-                    const targetBoat = {
-                        boatLevel: target.boatLevel || 1,
-                        maxCargo: target.maxCargo || 5,
-                        maxEnergy: target.maxEnergy || 100,
-                        avatar: target.avatar || '🚢'
-                    };
-
-                    // Keep existing fish items capped safely within new cargo capacity if needed
-                    const targetNewCargo = [...(target.cargo || [])];
-                    while (targetNewCargo.reduce((s, f) => s + (f.slots || 1), 0) > myOldBoat.maxCargo && targetNewCargo.length > 0) {
-                        targetNewCargo.pop();
-                    }
-
-                    await syncPlayerUpdate(me.uid, {
-                        boatLevel: targetBoat.boatLevel,
-                        maxCargo: targetBoat.maxCargo,
-                        maxEnergy: targetBoat.maxEnergy,
-                        energy: Math.min(targetBoat.maxEnergy, me.energy + 15),
-                        avatar: targetBoat.avatar,
-                        hijackedFrom: target.name,
-                        updatedAt: Date.now()
-                    });
-
-                    await syncPlayerUpdate(target.uid, {
-                        boatLevel: myOldBoat.boatLevel,
-                        maxCargo: myOldBoat.maxCargo,
-                        maxEnergy: myOldBoat.maxEnergy,
-                        energy: Math.min(myOldBoat.maxEnergy, target.energy || 50),
-                        avatar: myOldBoat.avatar,
-                        cargo: targetNewCargo,
-                        hijackedFrom: null,
-                        updatedAt: Date.now(),
-                        lastEvent: `⚔️ DRASTIS! ${me.name} membajak & menukar kapalnya dengan Kapal Lv.${targetBoat.boatLevel} milik ${target.name}!`
-                    });
-
-                    showToast(`BERHASIL! Kamu mengambil alih Kapal Lv.${targetBoat.boatLevel} (${targetBoat.maxCargo} Slot) milik ${target.name}!`, "success");
-                }
-            } else if (activeQuiz.actionType === 'steal') {
-                const target = roomPlayers[activeQuiz.targetUid];
-                if (!isCorrect) {
-                    showToast("Pencurian gagal! Jawabanmu kurang tepat.", "error");
-                } else if (target && Array.isArray(target.cargo) && target.cargo.length > 0) {
-                    const targetCargo = [...target.cargo];
-                    const stolenFish = targetCargo.pop();
-                    const avail = me.maxCargo - getUsedCargoSlots(me);
-
-                    if (avail < stolenFish.slots) {
-                        showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
-                    } else {
-                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now() });
-                        await syncPlayerUpdate(me.uid, {
-                            cargo: [...(me.cargo || []), stolenFish],
-                            updatedAt: Date.now(),
-                            lastEvent: `🏴‍☠️ ${me.name} mencuri ${stolenFish.icon} ${stolenFish.name} dari kapal ${target.name}!`
-                        });
-                        showToast(`Berhasil mencuri ${stolenFish.icon} ${stolenFish.name} dari ${target.name}!`, "success");
-                    }
-                }
-            } else if (activeQuiz.actionType === 'sabotage') {
-                const target = roomPlayers[activeQuiz.targetUid];
-                if (!isCorrect) {
-                    showToast("Sabotage gagal! Jaring lawan tetap aman.", "error");
-                } else if (target) {
-                    const newEnergy = Math.max(0, (target.energy || 0) - 30);
-                    await syncPlayerUpdate(target.uid, {
-                        energy: newEnergy,
-                        updatedAt: Date.now(),
-                        lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
-                    });
-                    showToast(`Sabotage berhasil! Energi ${target.name} berkurang 30!`, "success");
-                }
-            } else if (activeQuiz.actionType === 'coop') {
-                const partner = roomPlayers[activeQuiz.targetUid];
-                if (!isCorrect) {
-                    showToast("Ekspedisi kerja sama gagal karena jawaban salah!", "error");
-                } else if (partner) {
-                    await syncPlayerUpdate(me.uid, {
-                        coins: me.coins + 45,
-                        energy: Math.min(me.maxEnergy, me.energy + 25),
-                        updatedAt: Date.now()
-                    });
-                    await syncPlayerUpdate(partner.uid, {
-                        coins: (partner.coins || 0) + 45,
-                        energy: Math.min(partner.maxEnergy || 100, (partner.energy || 0) + 25),
-                        updatedAt: Date.now(),
-                        lastEvent: `🤝 ${me.name} & ${partner.name} sukses kerja sama ekspedisi (+45 Koin & +25 Energi)!`
-                    });
-                    showToast(`Kerja sama sukses! Kamu & ${partner.name} masing-masing dapat +45 Koin & +25 Energi!`, "success");
-                }
-            }
+            } else if (['hijack','steal','sabotage','coop'].includes(activeQuiz.actionType)) {
+ const q=activeQuiz;activeQuiz=null;
+ if(!isCorrect)return showToast('Challenge failed: incorrect answer','error');
+ try{await performPvp(q.actionType,q.targetUid);showToast('Challenge successful!','success')}catch(e){showToast('Action failed: '+(e.code||e.message),'error')}
+ return;
+ }
 
             activeQuiz = null;
         };
