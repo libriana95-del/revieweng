@@ -570,9 +570,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        let initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection;
 
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
@@ -596,6 +594,14 @@
                 return;
             }
             try {
+                const [appModule, authModule, dbModule] = await Promise.all([
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")
+                ]);
+                ({initializeApp} = appModule);
+                ({getAuth, signInAnonymously, signInWithCustomToken} = authModule);
+                ({getFirestore, doc, setDoc, onSnapshot, collection} = dbModule);
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -1123,8 +1129,15 @@
             const roomEl = document.getElementById('input-room-code');
             if (!nameEl.value.trim()) nameEl.value = "Kapten Utama";
             if (!roomEl.value.trim()) roomEl.value = "KELAS39";
-            await window.joinMultiplayerRoom();
-            await window.spawnClass39Bots();
+            try {
+                await window.joinMultiplayerRoom();
+                if (getMe()) await window.spawnClass39Bots();
+                startGameMusic();
+            } catch (error) {
+                console.error("Simulation startup:", error);
+                document.getElementById('lobby-status-msg').textContent = "Simulasi gagal: " + error.message;
+                showToast("Simulasi gagal: " + error.message, "error");
+            }
         };
 
         window.spawnClass39Bots = async function() {
@@ -1233,7 +1246,7 @@
                 }
             }
 
-            myUid = currentUser ? currentUser.uid : 'tab-' + crypto.randomUUID().slice(0, 8);
+            myUid = currentUser ? currentUser.uid : 'tab-' + (globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(0, 16);
             currentRoomCode = roomInput;
 
             const newPlayerState = {
