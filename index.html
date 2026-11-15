@@ -70,13 +70,13 @@
                     <span>📡 Room:</span> <span id="active-room-code" class="font-mono text-white tracking-wider">---</span>
                 </div>
                 <button onclick="spawnClass39Bots()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow">
-                    <span>🤖</span> <span>Mode Demo</span>
+                    <span>🤖</span> <span>Demo Mode</span>
                 </button>
                 <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
                     <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
                 </button>
-                <button id="music-toggle" onclick="toggleMemories()" class="bg-slate-800 text-sky-200 rounded-xl px-3 py-1.5 text-xs font-bold">♫ Musik ON</button><button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
-                    <span>📖</span> <span>Buku Materi</span>
+                <button id="music-toggle" onclick="toggleMemories()" class="bg-slate-800 text-sky-200 rounded-xl px-3 py-1.5 text-xs font-bold">♫ Music ON</button><button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
+                    <span>📖</span> <span>Study Guide</span>
                 </button>
             </div>
         </div>
@@ -89,9 +89,9 @@
                 <div id="active-avatar" class="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-md">⛵</div>
                 <div>
                     <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="text-[11px] uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold">Kapten Kamu</span>
-                        <span id="active-location-badge" class="text-[11px] uppercase tracking-wider bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md font-bold">🌊 Di Laut</span>
-                        <span id="hijacked-status-badge" class="hidden text-[11px] uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-md font-bold">⚔️ Memakai Kapal Rampasan</span>
+                        <span class="text-[11px] uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold">Your Captain</span>
+                        <span id="active-location-badge" class="text-[11px] uppercase tracking-wider bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md font-bold">🌊 At Sea</span>
+                        <span id="hijacked-status-badge" class="hidden text-[11px] uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-md font-bold">⚔️ Memakai Hijacked Ship</span>
                     </div>
                     <h2 id="active-captain-name" class="font-game text-lg sm:text-xl font-bold text-white leading-tight mt-0.5">Kapten</h2>
                 </div>
@@ -101,14 +101,14 @@
             <div class="flex flex-wrap items-center gap-4 sm:gap-5 flex-grow justify-end">
                 <!-- Coins -->
                 <div class="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-amber-500/40">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Koin</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Coins</p>
                     <p class="font-game font-bold text-amber-400 text-base sm:text-lg">🪙 <span id="hud-coins">80</span></p>
                 </div>
 
                 <!-- Energy Bar -->
                 <div class="min-w-[125px] sm:min-w-[145px]">
                     <div class="flex justify-between text-xs font-bold mb-1">
-                        <span class="text-emerald-300">⚡ Energi</span>
+                        <span class="text-emerald-300">⚡ Energy</span>
                         <span id="hud-energy-text" class="text-white">100 / 100</span>
                     </div>
                     <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
@@ -119,13 +119,13 @@
                 <!-- Cargo Capacity Bar -->
                 <div class="min-w-[140px] sm:min-w-[165px]">
                     <div class="flex justify-between text-xs font-bold mb-1">
-                        <span id="hud-cargo-label" class="text-sky-300">📦 Palka Kapalku</span>
+                        <span id="hud-cargo-label" class="text-sky-300">📦 Cargo Hold</span>
                         <span id="hud-cargo-text" class="text-white">0 / 15 Slot</span>
                     </div>
                     <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
                         <div id="hud-cargo-bar" class="bg-sky-400 h-full transition-all duration-300" style="width: 0%;"></div>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Besar=3 • Sedang=2 • Kecil=1</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Large=3 • Medium=2 • Small=1</p>
                 </div>
             </div>
         </div>
@@ -134,10 +134,10 @@
     <nav class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
         <div class="bg-white/15 backdrop-blur-md p-1.5 rounded-2xl grid grid-cols-2 gap-2 border border-white/20 shadow-lg">
             <button onclick="setLocation('sea')" id="loc-btn-sea" class="bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md text-xs sm:text-sm">
-                <span class="text-lg">🌊</span> Wilayah Laut (Memancing, Bajak Kapal & Aksi)
+                <span class="text-lg">🌊</span> Open Sea
             </button>
             <button onclick="setLocation('port')" id="loc-btn-port" class="text-white hover:bg-white/10 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-xs sm:text-sm">
-                <span class="text-lg">🏝️</span> Darat & Pelabuhan (Jual, Olah Ikan & Upgrade)
+                <span class="text-lg">🏝️</span> Harbor
             </button>
         </div>
     </nav>
@@ -195,7 +195,7 @@
                     <!-- Bite Action Button -->
                     <div id="bite-trigger-container" class="hidden w-full flex justify-center z-30">
                         <button onclick="triggerFishingQuiz()" class="bite-alert bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-game text-base sm:text-xl font-bold px-7 py-3.5 rounded-full shadow-[0_0_25px_rgba(245,158,11,0.9)] border-4 border-white cursor-pointer">
-                            ❗ IKAN MENYAMBAR! TARIK KAIL SEKARANG! ❗
+                            ❗ FISH ON! REEL IT IN NOW! ❗
                         </button>
                     </div>
                 </div>
@@ -205,29 +205,29 @@
             <div class="bg-slate-900/95 p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 z-20 border-t border-white/10">
                 <!-- 1. Fish -->
                 <button id="btn-cast-line" onclick="castFishingLine()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
-                    <span class="text-base sm:text-lg">🪱 Lempar Kail</span>
-                    <span class="text-[10px] font-sans font-semibold opacity-80">-15 Energi • Dapat Ikan</span>
+                    <span class="text-base sm:text-lg">🪱 Cast Line</span>
+                    <span class="text-[10px] font-sans font-semibold opacity-80">-15 Energy • Catch Fish</span>
                 </button>
 
                 <!-- 2. Hijack / Swap Ship -->
                 <button onclick="openInteractionModal('hijack')" class="bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center border border-purple-400/50">
-                    <span class="text-base sm:text-lg">⚔️ Bajak Kapal</span>
-                    <span class="text-[10px] font-sans font-normal text-purple-100">-25 Energi • Tukar Kapal</span>
+                    <span class="text-base sm:text-lg">⚔️ Hijack Ship</span>
+                    <span class="text-[10px] font-sans font-normal text-purple-100">-25 Energy • Swap Ships</span>
                 </button>
 
                 <!-- 3. Steal Fish -->
                 <button onclick="openInteractionModal('steal')" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
-                    <span class="text-base sm:text-lg">🏴‍☠️ Curi Ikan</span>
-                    <span class="text-[10px] font-sans font-normal text-rose-100">-20 Energi • Figurative</span>
+                    <span class="text-base sm:text-lg">🏴‍☠️ Steal Fish</span>
+                    <span class="text-[10px] font-sans font-normal text-rose-100">-20 Energy • Figurative</span>
                 </button>
 
                 <!-- 4. Sabotage -->
                 <button onclick="openInteractionModal('sabotage')" class="bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
-                    <span class="text-base sm:text-lg">💣 Sabotase</span>
-                    <span class="text-[10px] font-sans font-normal text-amber-100">-20 Energi • Narrative</span>
+                    <span class="text-base sm:text-lg">💣 Sabotage</span>
+                    <span class="text-[10px] font-sans font-normal text-amber-100">-20 Energy • Narrative</span>
                 </button>
 
-                <button onclick="activateGuard()" class="bg-teal-700 text-white rounded-xl p-3">🛡 Penjaga Kapal (Lv.3+)</button><button onclick="restCabin()" class="bg-indigo-700 text-white rounded-xl p-3">🛏 Istirahat di Kapal (Lv.5)</button><button onclick="showMissions()" class="bg-orange-700 text-white rounded-xl p-3">🏆 Misi & Penghargaan</button><!-- 5. Rare Co-op -->
+                <button onclick="activateGuard()" class="bg-teal-700 text-white rounded-xl p-3">🛡 Ship Guard (Lv.3+)</button><button onclick="restCabin()" class="bg-indigo-700 text-white rounded-xl p-3">🛏 Rest Onboard (Lv.5)</button><button onclick="showMissions()" class="bg-orange-700 text-white rounded-xl p-3">🏆 Missions & Achievements</button><!-- 5. Rare Co-op -->
                 <button style="display:none" id="btn-coop-action" onclick="openInteractionModal('coop')" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
                     <span class="text-base sm:text-lg">🤝 Kerja Sama</span>
                     <span id="coop-cooldown-label" class="text-[10px] font-sans font-normal text-indigo-200">Siap! • Bonus Bersama</span>
@@ -248,7 +248,7 @@
                                 <p class="text-xs text-slate-500">Olah ikan menjadi Fillet agar harganya naik 2x lipat sebelum dijual!</p>
                             </div>
                             <button onclick="sellAllCargo()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs shadow transition">
-                                💰 Jual Semua (<span id="port-total-value">0</span> 🪙)
+                                💰 Sell Semua (<span id="port-total-value">0</span> 🪙)
                             </button>
                         </div>
 
@@ -306,7 +306,7 @@
                     </div>
 
                     <div class="mt-4 bg-slate-800/70 p-2.5 rounded-xl text-[11px] text-slate-300 border border-slate-700/80">
-                        ⚔️ <strong>Tips Strategi:</strong> Malas menabung untuk upgrade kapal? Gunakan aksi <strong>Bajak Kapal</strong> di laut untuk mengambil alih kapal Lv.2+ milik lawan!
+                        ⚔️ <strong>Tips Strategi:</strong> Malas menabung untuk upgrade kapal? Gunakan aksi <strong>Hijack Ship</strong> di laut untuk mengambil alih kapal Lv.2+ milik lawan!
                     </div>
                 </div>
             </div>
@@ -319,7 +319,7 @@
     <!-- Leaderboard & Online Captains Radar (MOVED TO BOTTOM AS SECONDARY INFO) -->
     <section class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
         <div class="flex items-center justify-between mb-1.5 px-1">
-            <span class="text-[11px] font-bold text-sky-100 uppercase tracking-wider">🏆 Top 3 Kapten Terkaya</span>
+            <span class="text-[11px] font-bold text-sky-100 uppercase tracking-wider">🏆 Top 3 Richest Captains</span>
             <span id="radar-summary-text" class="text-[11px] text-amber-200 font-semibold">0 Kapten di Laut</span>
         </div>
         <div id="players-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -534,7 +534,7 @@
 
             <h4 id="catch-fish-name" class="font-game text-xl font-bold text-slate-900">Tuna Sirip Biru Raksasa</h4>
             <div class="mt-1 inline-flex items-center gap-2 bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 rounded-full text-xs font-extrabold">
-                <span>Estimasi Harga Jual:</span>
+                <span>Estimated Value:</span>
                 <span>🪙 <span id="catch-fish-price">85</span> Koin</span>
             </div>
 
@@ -549,7 +549,7 @@
             </div>
 
             <button onclick="closeFishCatchModal()" class="mt-5 w-full bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-game font-bold py-3 rounded-2xl text-sm shadow-lg transition">
-                Simpan ke Palka Kapal! ⛵
+                Collect & Continue! ⛵
             </button>
         </div>
     </div>
@@ -1120,12 +1120,12 @@
             // Active Captain Dashboard
             document.getElementById('active-avatar').textContent = me.avatar;
             document.getElementById('active-captain-name').textContent = `${me.name} (Kapal Lv.${me.boatLevel} • Pancing Lv.${me.rodLevel})`;
-            document.getElementById('active-location-badge').textContent = currentLocation === 'sea' ? '🌊 Di Laut' : '🏝️ Di Darat';
+            document.getElementById('active-location-badge').textContent = currentLocation === 'sea' ? '🌊 At Sea' : '🏝️ At Port';
             document.getElementById('hud-coins').textContent = me.coins;
 
             if (me.hijackedFrom) {
                 document.getElementById('hijacked-status-badge').classList.remove('hidden');
-                document.getElementById('hijacked-status-badge').textContent = `⚔️ Kapal Rampasan (${me.hijackedFrom})`;
+                document.getElementById('hijacked-status-badge').textContent = `⚔️ Hijacked Ship (${me.hijackedFrom})`;
             } else {
                 document.getElementById('hijacked-status-badge').classList.add('hidden');
             }
@@ -1141,7 +1141,7 @@
             const shipCargoUsed = getUsedCargoSlots(me);
             const shipCargoMax = me.maxCargo || 5;
             const cargoPct = Math.min(100, (shipCargoUsed / shipCargoMax) * 100);
-            document.getElementById('hud-cargo-label').textContent = `📦 Palka Kapalku (Lv.${me.boatLevel})`;
+            document.getElementById('hud-cargo-label').textContent = `📦 Cargo Hold (Lv.${me.boatLevel})`;
             document.getElementById('hud-cargo-text').textContent = `${shipCargoUsed} / ${shipCargoMax} Slot`;
             const cBar = document.getElementById('hud-cargo-bar');
             cBar.style.width = `${cargoPct}%`;
@@ -1152,9 +1152,9 @@
             document.getElementById('sea-boat-lvl').textContent = `Lv.${me.boatLevel}`;
             document.getElementById('sea-boat-emoji').textContent = me.avatar;
             document.getElementById('sea-ship-banner').innerHTML = me.hijackedFrom
-                ? `<span>⚔️</span> Perairan Terbuka — Kapal Rampasan dari <u>${me.hijackedFrom}</u> (Lv.${me.boatLevel})`
+                ? `<span>⚔️</span> Perairan Terbuka — Hijacked Ship dari <u>${me.hijackedFrom}</u> (Lv.${me.boatLevel})`
                 : `<span>🎣</span> Perairan Terbuka — Kapal ${me.name} (Lv.${me.boatLevel})`;
-            document.getElementById('sea-ship-subtext').textContent = `Kapasitas Palka: ${me.maxCargo} Slot • Energi Maks: ${me.maxEnergy}. Gunakan Bajak Kapal untuk menukar kapal dengan milik lawan!`;
+            document.getElementById('sea-ship-subtext').textContent = `Kapasitas Palka: ${me.maxCargo} Slot • Energi Maks: ${me.maxEnergy}. Gunakan Hijack Ship untuk menukar kapal dengan milik lawan!`;
 
             document.getElementById('crew-on-board-badges').innerHTML = `
                 <span class="bg-slate-900/80 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-white/20">
@@ -1201,11 +1201,11 @@
                             <div class="flex flex-col gap-1 shrink-0">
                                 ${!fish.processed && !fish.special ? `
                                     <button onclick="processFishAtPort(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
-                                        🍳 Olah
+                                        🍳 Cook
                                     </button>
-                                ` : `<span class="text-[10px] font-bold text-emerald-600 text-center">Siap Jual</span>`}
+                                ` : `<span class="text-[10px] font-bold text-emerald-600 text-center">Ready to Sell</span>`}
                                 <button onclick="sellSingleFish(${idx})" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-[10px] font-bold px-2 py-1 rounded-lg">
-                                    💰 Jual
+                                    💰 Sell
                                 </button>
                             </div>
                         </div>
@@ -1343,10 +1343,10 @@
                 titleEl.textContent = "⚔️ Bajak & Tukar Kapal Lawan";
                 descEl.textContent = "Jawab soal untuk mengambil alih & menukar kapalmu dengan kapal lawan (-25 Energi)! Fitur kapasitas palka & energi maks lawan langsung jadi milikmu.";
             } else if (mode === 'steal') {
-                titleEl.textContent = "🏴‍☠️ Curi Ikan Kapal Lawan";
+                titleEl.textContent = "🏴‍☠️ Steal Fish Kapal Lawan";
                 descEl.textContent = "Jawab soal Figurative Language untuk mencuri 1 ikan dari kapal target (-20 Energi)!";
             } else if (mode === 'sabotage') {
-                titleEl.textContent = "💣 Sabotase Jaring Lawan";
+                titleEl.textContent = "💣 Sabotage Jaring Lawan";
                 descEl.textContent = "Jawab soal Narrative Text untuk menguras 30 Energi kapal target (-20 Energi)!";
             } else {
                 titleEl.textContent = "🤝 Kerja Sama Ekspedisi";
@@ -1637,7 +1637,7 @@ if (activeQuiz.actionType === 'fishing') {
             } else if (activeQuiz.actionType === 'sabotage') {
                 const target = roomPlayers[activeQuiz.targetUid];
                 if (!isCorrect) {
-                    showToast("Sabotase gagal! Jaring lawan tetap aman.", "error");
+                    showToast("Sabotage gagal! Jaring lawan tetap aman.", "error");
                 } else if (target) {
                     const newEnergy = Math.max(0, (target.energy || 0) - 30);
                     await syncPlayerUpdate(target.uid, {
@@ -1645,7 +1645,7 @@ if (activeQuiz.actionType === 'fishing') {
                         updatedAt: Date.now(),
                         lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
                     });
-                    showToast(`Sabotase berhasil! Energi ${target.name} berkurang 30!`, "success");
+                    showToast(`Sabotage berhasil! Energi ${target.name} berkurang 30!`, "success");
                 }
             } else if (activeQuiz.actionType === 'coop') {
                 const partner = roomPlayers[activeQuiz.targetUid];
@@ -1678,7 +1678,7 @@ function choicePanel(title,choices){const o=document.createElement('div');o.clas
 window.processFishAtPort=function(idx){const me=getMe(),item=me?.cargo?.[idx];if(!item||item.processed||item.special||activeQuiz)return;choicePanel('Cooking Challenge',[['Basic Kitchen',15,1.5],['Seafood Restaurant',35,2],['Premium Restaurant',60,3]].map(([name,cost,mult],i)=>[name+' • '+cost+' koin',()=>{if(getMe().coins<cost)return showToast('Koin tidak cukup','error');openQuizChallenge('cook'+i,'cook',item.id);activeQuiz.cook={cost,mult}}]))};
 window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)return showToast('Penjaga melindungi kapal dari serangan. Terbuka di Lv.3.','warning');if(me.guardUntil>Date.now())return showToast('Guard masih aktif','info');if(me.coins<20)return showToast('Butuh 20 koin','warning');await syncPlayerUpdate(me.uid,{coins:me.coins-20,guardUntil:Date.now()+120000+(me.boatLevel-3)*60000});showToast('Penjaga aktif: kapal terlindungi dari serangan!','success')};
 window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Istirahat di kapal memulihkan 35 energi gratis. Terbuka di Lv.5.','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
-window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Misi & Penghargaan — selesaikan target untuk klaim koin',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
+window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Missions & Achievements — selesaikan target untuk klaim koin',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
 
         window.sellSingleFish = async function(idx) {
             const me = getMe();
@@ -1816,10 +1816,10 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
         memoriesBgm.loop=true;memoriesBgm.volume=.22;
         let musicEnabled=true;try{musicEnabled=localStorage.getItem('efq-music')!=='off'}catch(e){}
         function startMemories(){if(musicEnabled&&memoriesBgm.paused)memoriesBgm.play().catch(()=>{});}
-        window.toggleMemories=function(){musicEnabled=!musicEnabled;try{localStorage.setItem('efq-music',musicEnabled?'on':'off')}catch(e){}if(musicEnabled)startMemories();else memoriesBgm.pause();document.getElementById('music-toggle').textContent=musicEnabled?'♫ Musik ON':'♫ Musik OFF';};
+        window.toggleMemories=function(){musicEnabled=!musicEnabled;try{localStorage.setItem('efq-music',musicEnabled?'on':'off')}catch(e){}if(musicEnabled)startMemories();else memoriesBgm.pause();document.getElementById('music-toggle').textContent=musicEnabled?'♫ Music ON':'♫ Music OFF';};
         document.addEventListener('pointerdown',startMemories);
         document.addEventListener('keydown',startMemories);
-        window.addEventListener('DOMContentLoaded',()=>{document.getElementById('music-toggle').textContent=musicEnabled?'♫ Musik ON':'♫ Musik OFF'});
+        window.addEventListener('DOMContentLoaded',()=>{document.getElementById('music-toggle').textContent=musicEnabled?'♫ Music ON':'♫ Music OFF'});
         function unlockAudio(){
             try { audioCtx ||= new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume().catch(()=>{}); } catch(e){}
         }
@@ -1840,7 +1840,7 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
             const h=document.createElement('strong');h.textContent=title;h.style.cssText='display:block;font-size:17px;letter-spacing:.04em;border-bottom:1px solid #ffffff55;padding-bottom:8px';panel.appendChild(h);
             const p=document.createElement('p');p.textContent=msg;p.style.cssText='white-space:pre-line;line-height:1.6;margin-top:8px;font-size:14px';panel.appendChild(p);
             if(canPort){const b=document.createElement('button');b.textContent='⚓ Kembali ke pelabuhan';b.style.cssText='background:white;color:#991b1b;padding:8px;border-radius:8px;margin:8px 8px 0 0';b.onclick=()=>window.setLocation('port');panel.appendChild(b);}
-            const x=document.createElement('button');x.textContent='Tutup';x.style.cssText='padding:8px;margin-top:8px;border:1px solid white;border-radius:8px';x.onclick=()=>panel.remove();panel.appendChild(x);
+            const x=document.createElement('button');x.textContent='Close';x.style.cssText='padding:8px;margin-top:8px;border:1px solid white;border-radius:8px';x.onclick=()=>panel.remove();panel.appendChild(x);
             setTimeout(()=>{if(panel.firstChild===h)panel.remove();},canPort?15000:7000);
         }
         function attackAlert(log){
