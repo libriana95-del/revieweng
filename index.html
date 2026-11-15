@@ -871,8 +871,8 @@
             showToast("38 Siswa simulasi berhasil masuk! Total 39 Kapten aktif di laut.", "success");
         };
 
-        let sessionStop=null,classSession={},announcementSeen=0;
-function watchClassSession(){if(sessionStop)sessionStop();classSession={};announcementSeen=0;sessionStop=onSnapshot(doc(db,'rooms',currentRoomCode),snap=>{classSession=snap.data()||{};if(classSession.announcementAt>announcementSeen){announcementSeen=classSession.announcementAt;showToast(classSession.announcement,'info')}renderClassSession()},err=>showToast('Session sync: '+err.code,'error'))}
+        let sessionStop=null,classSession={},announcementSeen=0,disasterSeen=0;
+function watchClassSession(){if(sessionStop)sessionStop();classSession={};announcementSeen=0;sessionStop=onSnapshot(doc(db,'rooms',currentRoomCode),snap=>{classSession=snap.data()||{};if(classSession.disasterAt>disasterSeen){disasterSeen=classSession.disasterAt;if(Date.now()-disasterSeen<15000&&!classBlocked())runSeaEvent(classSession.disasterKind)}if(classSession.announcementAt>announcementSeen){announcementSeen=classSession.announcementAt;showToast(classSession.announcement,'info')}renderClassSession()},err=>showToast('Session sync: '+err.code,'error'))}
 function classBlocked(){return classSession.deleted||classSession.status==='PAUSED'||classSession.status==='ENDED'||(classSession.status==='LIVE'&&Date.now()>=classSession.deadline)}
 function renderClassSession(){if(!currentRoomCode)return;let el=document.getElementById('class-clock');if(!el){el=document.createElement('div');el.id='class-clock';el.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:4px 12px;border-radius:0 0 10px 10px;z-index:45;font-size:12px;pointer-events:none';document.body.append(el)}const ms=classSession.status==='LIVE'?Math.max(0,classSession.deadline-Date.now()):classSession.remaining||0;el.textContent=(classSession.status||'FREE PLAY')+(classSession.status==='LIVE'||classSession.status==='PAUSED'?' • '+Math.floor(ms/60000)+':'+String(Math.floor(ms/1000)%60).padStart(2,'0'):'');let shield=document.getElementById('class-shield');if(!shield){shield=document.createElement('div');shield.id='class-shield';shield.style.cssText='position:fixed;inset:0;z-index:99999;background:#0f172aed;color:white;display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;padding:30px';document.body.append(shield)}shield.style.display=classBlocked()?'flex':'none';shield.textContent=classSession.status==='PAUSED'?'Session paused by teacher':'Session ended. Thank you, Captain!'}
 setInterval(renderClassSession,500);
@@ -1679,13 +1679,13 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
         function startSeaEvents(){
             clearInterval(eventTimer);eventTimer=setInterval(runSeaEvent,90000);
         }
-        function runSeaEvent(){
-            const me=getMe();if(classBlocked()||!me||seaPending||activeQuiz||currentLocation!=='sea')return;
-            const pick=Math.floor(Math.random()*6);
+        function runSeaEvent(forced){
+            const me=getMe();if(classBlocked()||!me||seaPending||(activeQuiz&&!Number.isInteger(forced))||currentLocation!=='sea')return;
+            const pick=Number.isInteger(forced)?forced:Math.floor(Math.random()*6);
             if(pick>=4){const coins=pick===4?35:20;alertPanel(pick===4?'✨ LOST TREASURE':'🐟 FISH MIGRATION','Bonus '+coins+' koin!');syncPlayerUpdate(me.uid,{coins:me.coins+coins,updatedAt:Date.now()});return;}
             const names=['THUNDERSTORM','WHIRLPOOL','HEAVY FOG','EXTREME WAVES'];
             seaPending=true;playAlarm();alertPanel('⚠️ '+names[pick],'Bencana tiba dalam 15 detik. Berlindung di pelabuhan atau kehilangan energi!',true,true);
-            const uid=me.uid;setTimeout(()=>{seaPending=false;const p=getMe();if(!p||p.uid!==uid)return;if(currentLocation==='port'){showToast('Kapal aman di pelabuhan!','success');return;}const damage=[20,15,10,25][pick];syncPlayerUpdate(uid,{energy:Math.max(0,p.energy-damage),updatedAt:Date.now()});alertPanel('🌊 '+names[pick],'-'+damage+' energi',true);},15000);
+            const uid=me.uid;setTimeout(()=>{seaPending=false;const p=getMe();if(classBlocked()||!p||p.uid!==uid)return;if(currentLocation==='port'){showToast('Kapal aman di pelabuhan!','success');return;}const damage=[20,15,10,25][pick];syncPlayerUpdate(uid,{energy:Math.max(0,p.energy-damage),updatedAt:Date.now()});alertPanel('🌊 '+names[pick],'-'+damage+' energi',true);},15000);
         }
         window.testSeaAlarm=()=>{unlockAudio();playAlarm();alertPanel('🚨 ALARM TEST','Tes suara darurat.',true);};
     </script>
