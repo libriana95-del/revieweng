@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Fisher Quest - Petualangan Nelayan Bahasa Inggris</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 45%, #1e3a8a 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        h1, h2, h3, .font-game {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Animasi Ombak dan Perahu */
+        @keyframes bobbing {
+            0%, 100% { transform: translateY(0px) rotate(-1deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+        .boat-bob {
+            animation: bobbing 3s ease-in-out infinite;
+        }
+        @keyframes swim {
+            0% { transform: translateX(-100px) scaleX(1); }
+            48% { transform: translateX(calc(100vw - 120px)) scaleX(1); }
+            50% { transform: translateX(calc(100vw - 120px)) scaleX(-1); }
+            98% { transform: translateX(-100px) scaleX(-1); }
+            100% { transform: translateX(-100px) scaleX(1); }
+        }
+        .fish-swim {
+            animation: swim 18s linear infinite;
+        }
+        @keyframes pulse-bite {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .bite-alert {
+            animation: pulse-bite 0.5s infinite;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col justify-between">
+
+    <!-- Top Navigation / Status Bar -->
+    <header class="bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 shadow-lg sticky top-0 z-40 border-b border-sky-400/30">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="text-3xl">🏴‍☠️</span>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-wide text-amber-300 leading-none">English Fisher Quest</h1>
+                    <span class="text-xs text-sky-200">Kompetisi Kapten Nelayan • Biography, Figurative & Narrative</span>
+                </div>
+            </div>
+
+            <!-- Active Captain & Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <div id="room-badge-box" class="hidden bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5">
+                    <span>📡 Room:</span> <span id="active-room-code" class="font-mono text-white tracking-wider">---</span>
+                </div>
+                <button onclick="spawnClass39Bots()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow">
+                    <span>🤖</span> <span>Tes 39 Siswa</span>
+                </button>
+                <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
+                    <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
+                </button>
+                <button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
+                    <span>📖</span> <span>Buku Materi</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Location Switcher (LAUT vs DARAT/PELABUHAN) - MOVED TO TOP FOR IMMEDIATE ACTION FOCUS -->
+    <nav class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
+        <div class="bg-white/15 backdrop-blur-md p-1.5 rounded-2xl grid grid-cols-2 gap-2 border border-white/20 shadow-lg">
+            <button onclick="setLocation('sea')" id="loc-btn-sea" class="bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md text-xs sm:text-sm">
+                <span class="text-lg">🌊</span> Wilayah Laut (Memancing, Bajak Kapal & Aksi)
+            </button>
+            <button onclick="setLocation('port')" id="loc-btn-port" class="text-white hover:bg-white/10 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-xs sm:text-sm">
+                <span class="text-lg">🏝️</span> Darat & Pelabuhan (Jual, Olah Ikan & Upgrade)
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Game Viewport (PRIMARY FOCUS AT THE TOP) -->
+    <main class="max-w-6xl mx-auto w-full px-4 pt-3 pb-2 flex-grow flex flex-col justify-center">
+        
+        <!-- VIEW 1: WILAYAH LAUT (FISHING + HIJACK/SWAP SHIP + STEAL + SABOTAGE + CO-OP) -->
+        <section id="view-sea" class="bg-gradient-to-b from-sky-300 via-sky-500 to-blue-800 rounded-3xl shadow-2xl border-4 border-white/30 overflow-hidden relative min-h-[430px] flex flex-col justify-between">
+            <!-- Top Info -->
+            <div class="p-4 sm:p-6 flex flex-wrap justify-between items-start gap-3 z-10">
+                <div class="bg-white/90 backdrop-blur px-4 py-2.5 rounded-2xl shadow-md max-w-lg">
+                    <h2 id="sea-ship-banner" class="font-game text-base sm:text-lg font-bold text-sky-900 flex items-center gap-2">
+                        <span>🎣</span> Perairan Terbuka — Kapal Aktif
+                    </h2>
+                    <p id="sea-ship-subtext" class="text-xs text-slate-600 mt-0.5">
+                        Tangkap ikan (makin cepat menjawab = makin besar ikannya), atau bajak & tukar kapal canggih milik lawan!
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <div class="bg-slate-900/85 text-white px-3 py-1.5 rounded-xl border border-sky-400/40 text-xs">
+                        <span class="text-slate-400 block text-[10px] uppercase">Pancing</span>
+                        <strong id="sea-rod-lvl" class="text-amber-300 font-game">Lv.1</strong>
+                    </div>
+                    <div class="bg-slate-900/85 text-white px-3 py-1.5 rounded-xl border border-sky-400/40 text-xs">
+                        <span class="text-slate-400 block text-[10px] uppercase">Kapalmu</span>
+                        <strong id="sea-boat-lvl" class="text-sky-300 font-game">Lv.1</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boat & Ocean Visual -->
+            <div class="relative flex-grow flex flex-col items-center justify-center my-1">
+                <div class="boat-bob relative z-20 flex flex-col items-center">
+                    <div id="crew-on-board-badges" class="flex flex-wrap justify-center gap-1 mb-1">
+                        <!-- Captain badge rendered here -->
+                    </div>
+                    <div id="sea-boat-emoji" class="text-6xl sm:text-7xl drop-shadow-lg select-none">⛵</div>
+                    <div id="fishing-status-badge" class="mt-2 bg-slate-900/85 text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-white/20 shadow-lg text-center">
+                        Siap melempar kail (-15 Energi) atau membajak kapal lawan...
+                    </div>
+                </div>
+
+                <!-- Ocean Water -->
+                <div class="w-full h-32 bg-blue-950/60 backdrop-blur-[2px] border-t-4 border-sky-200/50 mt-3 relative overflow-hidden flex items-center">
+                    <img src="assets/fish/tuna.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="Tuna" class="fish-swim h-10 w-auto object-contain opacity-80 absolute top-3 pointer-events-none">
+                    <div style="display:none;" class="fish-swim text-3xl opacity-70 absolute top-3">🐋</div>
+
+                    <img src="assets/fish/snapper.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="Snapper" class="fish-swim h-9 w-auto object-contain opacity-75 absolute bottom-3 pointer-events-none" style="animation-delay: -6s;">
+                    <div style="display:none;" class="fish-swim text-3xl opacity-60 absolute bottom-3" style="animation-delay: -6s;">🐟</div>
+
+                    <img src="assets/fish/shrimp.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="Shrimp" class="fish-swim h-8 w-auto object-contain opacity-70 absolute top-10 pointer-events-none" style="animation-delay: -11s;">
+                    <div style="display:none;" class="fish-swim text-2xl opacity-50 absolute top-10" style="animation-delay: -11s;">🦐</div>
+
+                    <!-- Bite Action Button -->
+                    <div id="bite-trigger-container" class="hidden w-full flex justify-center z-30">
+                        <button onclick="triggerFishingQuiz()" class="bite-alert bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-game text-base sm:text-xl font-bold px-7 py-3.5 rounded-full shadow-[0_0_25px_rgba(245,158,11,0.9)] border-4 border-white cursor-pointer">
+                            ❗ IKAN MENYAMBAR! TARIK KAIL SEKARANG! ❗
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sea Action Bar (5 Main Sea Actions including Hijack/Swap Ship) -->
+            <div class="bg-slate-900/95 p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 z-20 border-t border-white/10">
+                <!-- 1. Fish -->
+                <button id="btn-cast-line" onclick="castFishingLine()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
+                    <span class="text-base sm:text-lg">🪱 Lempar Kail</span>
+                    <span class="text-[10px] font-sans font-semibold opacity-80">-15 Energi • Dapat Ikan</span>
+                </button>
+
+                <!-- 2. Hijack / Swap Ship -->
+                <button onclick="openInteractionModal('hijack')" class="bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center border border-purple-400/50">
+                    <span class="text-base sm:text-lg">⚔️ Bajak Kapal</span>
+                    <span class="text-[10px] font-sans font-normal text-purple-100">-25 Energi • Tukar Kapal</span>
+                </button>
+
+                <!-- 3. Steal Fish -->
+                <button onclick="openInteractionModal('steal')" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
+                    <span class="text-base sm:text-lg">🏴‍☠️ Curi Ikan</span>
+                    <span class="text-[10px] font-sans font-normal text-rose-100">-20 Energi • Figurative</span>
+                </button>
+
+                <!-- 4. Sabotage -->
+                <button onclick="openInteractionModal('sabotage')" class="bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
+                    <span class="text-base sm:text-lg">💣 Sabotase</span>
+                    <span class="text-[10px] font-sans font-normal text-amber-100">-20 Energi • Narrative</span>
+                </button>
+
+                <!-- 5. Rare Co-op -->
+                <button id="btn-coop-action" onclick="openInteractionModal('coop')" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
+                    <span class="text-base sm:text-lg">🤝 Kerja Sama</span>
+                    <span id="coop-cooldown-label" class="text-[10px] font-sans font-normal text-indigo-200">Siap! • Bonus Bersama</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 2: DARAT & PELABUHAN (JUAL, OLAH IKAN, ISTIRAHAT & UPGRADE) -->
+        <section id="view-port" class="hidden bg-amber-50 rounded-3xl shadow-2xl border-4 border-amber-200 p-4 sm:p-6 min-h-[430px] flex flex-col justify-between gap-5">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- Left Column (7 cols): Cargo / Catch Management (Sell Raw or Process/Cook) -->
+                <div class="lg:col-span-7 bg-white p-4 sm:p-5 rounded-2xl border-2 border-amber-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-game text-lg sm:text-xl font-bold text-slate-800">🧺 Palka Kapalmu (<span id="port-cargo-used">0</span>/<span id="port-cargo-max">15</span> Slot)</h3>
+                                <p class="text-xs text-slate-500">Olah ikan menjadi Fillet agar harganya naik 2x lipat sebelum dijual!</p>
+                            </div>
+                            <button onclick="sellAllCargo()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs shadow transition">
+                                💰 Jual Semua (<span id="port-total-value">0</span> 🪙)
+                            </button>
+                        </div>
+
+                        <div id="cargo-list-container" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[250px] overflow-y-auto pr-1">
+                            <!-- Fish items injected here -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2">
+                        <button onclick="restAtTavern()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                            <span>🛌</span> Istirahat di Kedai (+50 Energi • Biaya 15 Koin)
+                        </button>
+                        <button onclick="setLocation('sea')" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition">
+                            ⛵ Kembali Melaut →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column (5 cols): Shipyard Upgrades (Kapal & Alat Pancing) -->
+                <div class="lg:col-span-5 bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border-2 border-slate-700 shadow-md flex flex-col justify-between">
+                    <div>
+                        <span class="bg-amber-400/20 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase">Galangan Kapal & Toko</span>
+                        <h3 class="font-game text-lg sm:text-xl font-bold text-white mt-1">🛠️ Upgrade Perlengkapan</h3>
+                        <p class="text-xs text-slate-300 mt-0.5">Kapal dengan palka besar dan energi tinggi sangat diincar untuk dibajak lawan—waspada di laut!</p>
+
+                        <div class="mt-4 space-y-3">
+                            <!-- Upgrade Boat Capacity & Max Energy -->
+                            <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-bold text-sky-300 text-sm">🚢 Upgrade Kapal & Palka</h4>
+                                        <p id="upgrade-boat-desc" class="text-xs text-slate-300 mt-0.5">Saat ini: Lv.1 (Maks 15 Slot / 100 Energi)</p>
+                                    </div>
+                                    <span class="text-2xl">⛵</span>
+                                </div>
+                                <button id="btn-upgrade-boat" onclick="upgradeBoat()" class="mt-3 w-full bg-sky-500 hover:bg-sky-400 active:scale-95 text-slate-950 font-bold py-2 rounded-xl text-xs transition">
+                                    ⬆️ Upgrade ke Lv.2 (+6 Slot & +25 Energi) — 120 🪙
+                                </button>
+                            </div>
+
+                            <!-- Upgrade Fishing Rod -->
+                            <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-bold text-amber-300 text-sm">🎣 Upgrade Alat Pancing</h4>
+                                        <p id="upgrade-rod-desc" class="text-xs text-slate-300 mt-0.5">Saat ini: Lv.1 (Bonus Harga Ikan +0%)</p>
+                                    </div>
+                                    <span class="text-2xl">🔱</span>
+                                </div>
+                                <button id="btn-upgrade-rod" onclick="upgradeRod()" class="mt-3 w-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold py-2 rounded-xl text-xs transition">
+                                    ⬆️ Upgrade ke Lv.2 (Bonus Harga +35%) — 100 🪙
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-slate-800/70 p-2.5 rounded-xl text-[11px] text-slate-300 border border-slate-700/80">
+                        ⚔️ <strong>Tips Strategi:</strong> Malas menabung untuk upgrade kapal? Gunakan aksi <strong>Bajak Kapal</strong> di laut untuk mengambil alih kapal Lv.2+ milik lawan!
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Active Captain Dashboard (Stats: Koin, Energi, Kapasitas Palka, Status Kapal) -->
+    <section class="max-w-6xl mx-auto w-full px-4 pt-2 z-30">
+        <div class="bg-slate-900/85 backdrop-blur-md text-white p-3.5 sm:p-4 rounded-2xl border border-white/15 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div id="active-avatar" class="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-md">⛵</div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[11px] uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold">Kapten Kamu</span>
+                        <span id="active-location-badge" class="text-[11px] uppercase tracking-wider bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md font-bold">🌊 Di Laut</span>
+                        <span id="hijacked-status-badge" class="hidden text-[11px] uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-md font-bold">⚔️ Memakai Kapal Rampasan</span>
+                    </div>
+                    <h2 id="active-captain-name" class="font-game text-lg sm:text-xl font-bold text-white leading-tight mt-0.5">Kapten</h2>
+                </div>
+            </div>
+
+            <!-- Bars: Energy & Cargo Capacity -->
+            <div class="flex flex-wrap items-center gap-4 sm:gap-5 flex-grow justify-end">
+                <!-- Coins -->
+                <div class="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-amber-500/40">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Koin</p>
+                    <p class="font-game font-bold text-amber-400 text-base sm:text-lg">🪙 <span id="hud-coins">80</span></p>
+                </div>
+
+                <!-- Energy Bar -->
+                <div class="min-w-[125px] sm:min-w-[145px]">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span class="text-emerald-300">⚡ Energi</span>
+                        <span id="hud-energy-text" class="text-white">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                        <div id="hud-energy-bar" class="bg-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Cargo Capacity Bar -->
+                <div class="min-w-[140px] sm:min-w-[165px]">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span id="hud-cargo-label" class="text-sky-300">📦 Palka Kapalku</span>
+                        <span id="hud-cargo-text" class="text-white">0 / 15 Slot</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                        <div id="hud-cargo-bar" class="bg-sky-400 h-full transition-all duration-300" style="width: 0%;"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Besar=3 • Sedang=2 • Kecil=1</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Leaderboard & Online Captains Radar (MOVED TO BOTTOM AS SECONDARY INFO) -->
+    <section class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
+        <div class="flex items-center justify-between mb-1.5 px-1">
+            <span class="text-[11px] font-bold text-sky-100 uppercase tracking-wider">🏆 Top 6 Kapten Terkaya & Posisimu</span>
+            <span id="radar-summary-text" class="text-[11px] text-amber-200 font-semibold">0 Kapten di Laut</span>
+        </div>
+        <div id="players-bar" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <!-- Top 6 + Current player compact cards rendered dynamically -->
+        </div>
+    </section>
+
+    <!-- Live Ocean Activity Ticker (MOVED TO BOTTOM) -->
+    <div class="max-w-6xl mx-auto w-full px-4 pt-2.5 pb-5 z-30">
+        <div class="bg-slate-950/75 text-sky-200 px-3.5 py-1.5 rounded-xl border border-sky-400/20 text-xs flex items-center gap-2 overflow-hidden">
+            <span class="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase shrink-0 animate-pulse">LIVE RADAR</span>
+            <span id="live-activity-log" class="truncate font-medium">Menunggu kapten masuk ke ruangan laut...</span>
+        </div>
+    </div>
+
+    <!-- MODAL: MULTIPLAYER LOBBY (CREATE / JOIN ROOM) -->
+    <div id="lobby-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-sky-400">
+            <div class="text-center">
+                <span class="text-4xl">⚓</span>
+                <h2 class="font-game text-2xl font-bold text-slate-800 mt-1">Lobby Multiplayer Kelas</h2>
+                <p class="text-xs text-slate-500 mt-1">Setiap siswa membuka game ini di perangkatnya dan masuk ke Kode Ruangan yang sama!</p>
+            </div>
+
+            <div class="mt-5 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Kapten / Siswa</label>
+                    <input id="input-player-name" type="text" maxlength="18" placeholder="Contoh: Kapten Budi" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 focus:border-sky-500 outline-none text-sm font-bold text-slate-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Ikon Kapal</label>
+                    <div class="grid grid-cols-4 gap-2" id="avatar-picker">
+                        <button type="button" onclick="selectLobbyAvatar('⛵', this)" class="avatar-opt bg-sky-100 border-2 border-sky-500 py-2 rounded-xl text-2xl">⛵</button>
+                        <button type="button" onclick="selectLobbyAvatar('🚤', this)" class="avatar-opt bg-slate-100 border-2 border-transparent py-2 rounded-xl text-2xl">🚤</button>
+                        <button type="button" onclick="selectLobbyAvatar('🚢', this)" class="avatar-opt bg-slate-100 border-2 border-transparent py-2 rounded-xl text-2xl">🚢</button>
+                        <button type="button" onclick="selectLobbyAvatar('🛥️', this)" class="avatar-opt bg-slate-100 border-2 border-transparent py-2 rounded-xl text-2xl">🛥️</button>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kode Ruangan Laut (Room Code)</label>
+                    <div class="flex gap-2">
+                        <input id="input-room-code" type="text" maxlength="10" placeholder="Misal: LAUT01" class="uppercase flex-grow px-3.5 py-2.5 rounded-xl border-2 border-slate-200 focus:border-sky-500 outline-none text-sm font-mono font-bold text-slate-800">
+                        <button onclick="generateRandomRoom()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 rounded-xl text-xs">Acak Kode</button>
+                    </div>
+                </div>
+
+                <button id="btn-join-room" onclick="joinMultiplayerRoom()" class="w-full bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-game font-bold py-3 rounded-2xl shadow-lg text-sm transition mt-2">
+                    🌊 Berlayar Masuk ke Ruangan!
+                </button>
+                <button type="button" onclick="joinWithDemoBots()" class="w-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-game font-bold py-2.5 rounded-2xl shadow text-xs transition">
+                    🤖 Simulasi Kelas Penuh (39 Siswa Sekaligus)
+                </button>
+            </div>
+            <p id="lobby-status-msg" class="text-[11px] text-center text-slate-400 mt-3">Menghubungkan ke server pelabuhan...</p>
+        </div>
+    </div>
+
+    <!-- MODAL: PLAYER INTERACTION (WITH SEARCH BAR FOR 39 STUDENTS) -->
+    <div id="interaction-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-sky-400">
+            <h3 id="inter-modal-title" class="font-game text-xl font-bold text-slate-800">Pilih Target Kapal</h3>
+            <p id="inter-modal-desc" class="text-xs text-slate-600 mt-1">Pilih kapten yang ingin ditargetkan:</p>
+            <div class="mt-3">
+                <input id="inter-search-input" oninput="filterInteractionTargets()" type="text" placeholder="🔍 Cari nama teman / filter kapal yang punya ikan..." class="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 focus:border-sky-500 outline-none text-xs font-semibold text-slate-800">
+            </div>
+            <div id="inter-targets-list" class="mt-3 space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                <!-- Target buttons -->
+            </div>
+            <button onclick="closeInteractionModal()" class="mt-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2.5 rounded-xl text-xs">Batal</button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: QUIZ CHALLENGE MODAL (WITH TIMER & FISH SIZE INDICATOR) -->
+    <div id="quiz-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl border-4 border-amber-400 relative">
+            <div class="flex justify-between items-center gap-2 mb-3">
+                <span id="quiz-topic-badge" class="bg-sky-100 text-sky-800 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                    Topic: Narrative Text
+                </span>
+                <div class="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    <span>⏱️</span> <span id="quiz-timer-text">60.0s</span>
+                </div>
+            </div>
+
+            <!-- Live Fish Size Meter (Only visible when fishing) -->
+            <div id="fish-size-meter-box" class="mb-4 bg-slate-100 p-3 rounded-2xl border border-slate-200">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-slate-600">Prediksi Ukuran Ikan:</span>
+                    <span id="predicted-size-label" class="text-emerald-600">🐋 RAKSASA (3 Slot • Super Mahal!)</span>
+                </div>
+                <div class="w-full bg-slate-300 h-2.5 rounded-full overflow-hidden">
+                    <div id="quiz-time-bar" class="bg-emerald-500 h-full transition-all duration-100" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
+                <p id="quiz-question-text" class="text-slate-800 font-semibold text-sm sm:text-base leading-relaxed">
+                    Pertanyaan akan muncul di sini...
+                </p>
+            </div>
+
+            <div id="quiz-options-container" class="space-y-2.5"></div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: STUDY BOOK (RANGKUMAN MATERI) -->
+    <div id="study-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border-4 border-indigo-400 overflow-hidden">
+            <div class="bg-indigo-600 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📖</span>
+                    <h2 class="font-game text-xl font-bold">Buku Saku Materi Bahasa Inggris</h2>
+                </div>
+                <button onclick="closeStudyBook()" class="bg-white/20 hover:bg-white/30 w-8 h-8 rounded-full font-bold flex items-center justify-center">✕</button>
+            </div>
+
+            <!-- Tabs inside Study Book -->
+            <div class="flex border-b border-slate-200 bg-slate-50 px-4 pt-3 gap-2 overflow-x-auto">
+                <button onclick="showStudyTab('biography')" id="stab-biography" class="study-tab bg-indigo-600 text-white px-4 py-2 rounded-t-xl font-bold text-xs sm:text-sm whitespace-nowrap">
+                    1. Biography Text
+                </button>
+                <button onclick="showStudyTab('figurative')" id="stab-figurative" class="study-tab bg-slate-200 text-slate-700 px-4 py-2 rounded-t-xl font-bold text-xs sm:text-sm whitespace-nowrap">
+                    2. Figurative Language
+                </button>
+                <button onclick="showStudyTab('narrative')" id="stab-narrative" class="study-tab bg-slate-200 text-slate-700 px-4 py-2 rounded-t-xl font-bold text-xs sm:text-sm whitespace-nowrap">
+                    3. Narrative Text
+                </button>
+            </div>
+
+            <!-- Study Content -->
+            <div class="p-6 overflow-y-auto space-y-4 text-sm text-slate-700 leading-relaxed">
+                <!-- Biography Content -->
+                <div id="scontent-biography" class="study-content space-y-3">
+                    <h3 class="font-game text-xl font-bold text-indigo-800">📜 Biography Text (Teks Biografi)</h3>
+                    <p><strong>Definisi:</strong> Teks yang menceritakan kisah hidup seseorang secara faktual yang ditulis oleh orang lain (bukan oleh tokoh itu sendiri).</p>
+                    <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                        <h4 class="font-bold text-indigo-900 mb-1">Generic Structure (Struktur Teks):</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Orientation:</strong> Pengenalan tokoh (nama, tempat/tanggal lahir, latar belakang keluarga).</li>
+                            <li><strong>Events:</strong> Rangkaian peristiwa penting, perjuangan, pendidikan, dan pencapaian karier tokoh secara kronologis.</li>
+                            <li><strong>Re-orientation:</strong> Kesimpulan atau pandangan penulis terhadap kontribusi/warisan tokoh tersebut.</li>
+                        </ul>
+                    </div>
+                    <p><strong>Ciri Kebahasaan:</strong> Menggunakan <em>Simple Past Tense</em> (was, were, went, discovered), kata penghubung waktu (<em>in 1995, after that, later</em>), dan kata ganti orang ketiga (<em>he, she</em>).</p>
+                </div>
+
+                <!-- Figurative Language Content -->
+                <div id="scontent-figurative" class="study-content hidden space-y-3">
+                    <h3 class="font-game text-xl font-bold text-amber-800">✨ Figurative Language (Majas / Gaya Bahasa)</h3>
+                    <p><strong>Definisi:</strong> Penggunaan kata atau frasa dengan makna kiasan untuk menciptakan efek imajinatif dan memperindah karya sastra.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <strong class="text-amber-900">1. Simile (Perumpamaan)</strong>
+                            <p class="text-xs mt-1">Membandingkan dua hal berbeda menggunakan kata <em>"like"</em> atau <em>"as"</em>. Contoh: <em>"He swims like a fish."</em></p>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <strong class="text-amber-900">2. Metaphor (Metafora)</strong>
+                            <p class="text-xs mt-1">Perbandingan langsung tanpa kata <em>like/as</em>. Contoh: <em>"Time is a thief."</em></p>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <strong class="text-amber-900">3. Personification (Personifikasi)</strong>
+                            <p class="text-xs mt-1">Memberikan sifat manusia pada benda mati. Contoh: <em>"The angry waves swallowed the boat."</em></p>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <strong class="text-amber-900">4. Hyperbole (Hiperbola)</strong>
+                            <p class="text-xs mt-1">Pernyataan yang dilebih-lebihkan secara ekstrem. Contoh: <em>"I waited for a million years."</em></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Narrative Text Content -->
+                <div id="scontent-narrative" class="study-content hidden space-y-3">
+                    <h3 class="font-game text-xl font-bold text-rose-800">🐉 Narrative Text (Teks Narasi)</h3>
+                    <p><strong>Tujuan (Social Function):</strong> Menghibur pembaca (<em>to entertain/amuse the readers</em>) melalui cerita fiksi maupun legenda yang memiliki konflik dan pesan moral.</p>
+                    <div class="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                        <h4 class="font-bold text-rose-900 mb-1">Generic Structure:</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Orientation:</strong> Pengenalan tokoh, waktu, dan tempat kejadian (<em>Once upon a time...</em>).</li>
+                            <li><strong>Complication:</strong> Munculnya masalah atau puncak konflik dalam cerita.</li>
+                            <li><strong>Resolution:</strong> Penyelesaian masalah (bisa berakhir bahagia/<em>happy ending</em> atau sedih/<em>sad ending</em>).</li>
+                            <li><strong>Re-orientation / Coda:</strong> Pesan moral (<em>moral value</em>) yang dapat dipetik dari cerita.</li>
+                        </ul>
+                    </div>
+                    <p><strong>Ciri Kebahasaan:</strong> <em>Past Tense</em>, <em>Action Verbs</em> (sailed, caught, shouted), dan <em>Time Conjunctions</em> (Once upon a time, suddenly, finally).</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-100 px-6 py-3 flex justify-end">
+                <button onclick="closeStudyBook()" class="bg-indigo-600 text-white font-bold px-5 py-2 rounded-xl text-sm">Siap Bermain!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast / Notification Banner (No alert() used) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
+        // ==========================================
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-fisher-quest';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let app = null;
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let currentRoomCode = null;
+        let unsubscribeRoom = null;
+        let selectedAvatar = '⛵';
+        let firestoreEnabled = false;
+        const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('english_fisher_quest_sync') : null;
+
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                document.getElementById('lobby-status-msg').textContent = "✅ Mode Lokal & Multi-Tab Aktif! Masukkan nama & kode ruang.";
+                return;
+            }
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+                firestoreEnabled = true;
+                document.getElementById('lobby-status-msg').textContent = "✅ Terhubung ke server multiplayer! Masukkan nama & kode ruang.";
+            } catch (err) {
+                firestoreEnabled = false;
+                document.getElementById('lobby-status-msg').textContent = "✅ Siap! Mode Sinkronisasi Lokal / Bot Aktif.";
+            }
+        }
+        initFirebase();
+
+        // ==========================================
+        // 1. QUESTION BANK (BIOGRAPHY, FIGURATIVE, NARRATIVE)
+        // ==========================================
+        const QUESTION_BANK = {
+            biography: [
+                {
+                    q: "Which part of a Biography text introduces the person's full name, date of birth, and early background?",
+                    options: ["Orientation", "Complication", "Re-orientation", "Resolution"],
+                    answer: 0
+                },
+                {
+                    q: "Read this excerpt: 'B.J. Habibie was born in Parepare on June 25, 1936. Later, he studied aerospace engineering in Germany.' Which tense is predominantly used?",
+                    options: ["Simple Present Tense", "Simple Past Tense", "Future Continuous Tense", "Present Perfect Tense"],
+                    answer: 1
+                },
+                {
+                    q: "What is the main difference between a Biography and an Autobiography?",
+                    options: [
+                        "Biography is written by someone else; Autobiography is written by the person themselves.",
+                        "Biography is pure fiction; Autobiography is factual.",
+                        "Biography uses Future Tense; Autobiography uses Past Tense.",
+                        "There is no difference between them."
+                    ],
+                    answer: 0
+                },
+                {
+                    q: "Which section of a biography presents the author's concluding remarks about the figure's legacy and achievements?",
+                    options: ["Orientation", "Events", "Re-orientation", "Abstract"],
+                    answer: 2
+                },
+                {
+                    q: "'After graduating from university, R.A. Kartini fought tirelessly for women's education.' The word 'tirelessly' describes...",
+                    options: ["Her lack of energy", "Her persistent and hardworking effort", "Her refusal to study", "Her fear of failure"],
+                    answer: 1
+                }
+            ],
+            figurative: [
+                {
+                    q: "Identify the figurative language: 'The angry ocean waves swallowed the tiny wooden boat whole.'",
+                    options: ["Simile", "Personification", "Alliteration", "Onomatopoeia"],
+                    answer: 1
+                },
+                {
+                    q: "Identify the figurative language: 'That giant tuna is as heavy as a truck!'",
+                    options: ["Metaphor", "Simile", "Personification", "Oxymoron"],
+                    answer: 1
+                },
+                {
+                    q: "Identify the figurative language: 'I have been waiting on this boat for a million years!'",
+                    options: ["Hyperbole", "Simile", "Idiom", "Understatement"],
+                    answer: 0
+                },
+                {
+                    q: "Identify the figurative language: 'Time is a thief that steals our youth while we sail.'",
+                    options: ["Simile", "Metaphor", "Personification", "Hyperbole"],
+                    answer: 1
+                },
+                {
+                    q: "What does the idiom 'We are all in the same boat' mean?",
+                    options: [
+                        "Everyone owns a fishing vessel.",
+                        "Everyone is facing the same difficult situation together.",
+                        "Nobody knows how to swim.",
+                        "The boat is sinking quickly."
+                    ],
+                    answer: 1
+                }
+            ],
+            narrative: [
+                {
+                    q: "What is the primary social function (purpose) of a Narrative Text?",
+                    options: [
+                        "To explain how to cook seafood step-by-step",
+                        "To entertain or amuse the readers with a story",
+                        "To persuade people to buy fish at the market",
+                        "To describe the scientific anatomy of a whale"
+                    ],
+                    answer: 1
+                },
+                {
+                    q: "In Narrative Text, the part where the main problem or crisis begins to develop is called...",
+                    options: ["Orientation", "Complication", "Resolution", "Coda"],
+                    answer: 1
+                },
+                {
+                    q: "In the Indonesian legend 'Malin Kundang', what is the moral value (Coda) of the story?",
+                    options: [
+                        "Always sail away to become rich quickly.",
+                        "Never be arrogant or disrespectful to your own parents.",
+                        "Avoid trading in big coastal cities.",
+                        "Ships are stronger than storms."
+                    ],
+                    answer: 1
+                },
+                {
+                    q: "Which of the following is a common time conjunction used at the beginning of a Narrative Text?",
+                    options: ["Once upon a time", "In conclusion", "On the other hand", "Therefore"],
+                    answer: 0
+                },
+                {
+                    q: "'Suddenly, a colossal sea dragon emerged from the deep abyss and blocked the fisherman's path.' Which part of narrative structure is this?",
+                    options: ["Orientation", "Complication", "Resolution", "Re-orientation"],
+                    answer: 1
+                }
+            ]
+        };
+
+        const FISH_CATALOG = {
+            large: [
+                { name: "Tuna Sirip Biru Raksasa", icon: "🐋", image: "assets/fish/tuna.png", basePrice: 85, slots: 3, sizeLabel: "Besar" },
+                { name: "Marlin Raja Samudra", icon: "🦈", image: "assets/fish/marlin.png", basePrice: 95, slots: 3, sizeLabel: "Besar" }
+            ],
+            medium: [
+                { name: "Kakap Merah Segar", icon: "🐟", image: "assets/fish/snapper.png", basePrice: 45, slots: 2, sizeLabel: "Sedang" },
+                { name: "Kerapu Karang", icon: "🐡", image: "assets/fish/grouper.png", basePrice: 50, slots: 2, sizeLabel: "Sedang" }
+            ],
+            small: [
+                { name: "Ikan Teri & Udang", icon: "🦐", image: "assets/fish/shrimp.png", basePrice: 20, slots: 1, sizeLabel: "Kecil" },
+                { name: "Sarden Kecil", icon: "🐠", image: "assets/fish/sardine.png", basePrice: 22, slots: 1, sizeLabel: "Kecil" }
+            ]
+        };
+
+        // Helper untuk merender PNG dari folder assets/fish/ dengan fallback otomatis ke emoji
+        function renderFishVisual(fish, sizeClass = "w-8 h-8") {
+            const imgPath = fish.image || "";
+            const fallbackEmoji = fish.icon || "🐟";
+            if (!imgPath) return `<span class="text-2xl">${fallbackEmoji}</span>`;
+            return `
+                <img src="${imgPath}" alt="${fish.name}" class="${sizeClass} object-contain shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span style="display:none;" class="text-2xl">${fallbackEmoji}</span>
+            `;
+        }
+
+        // ==========================================
+        // 2. MULTIPLAYER ROOM STATE
+        // ==========================================
+        let myUid = null;
+        let roomPlayers = {};
+        let currentLocation = 'sea';
+        let isLineCast = false;
+        let activeQuiz = null;
+        let quizTimerInterval = null;
+        let quizStartTime = 0;
+        let currentInteractionMode = null;
+
+        function getMe() {
+            return myUid ? roomPlayers[myUid] : null;
+        }
+
+        function getUsedCargoSlots(player) {
+            if (!player || !Array.isArray(player.cargo)) return 0;
+            return player.cargo.reduce((sum, item) => sum + (item.slots || 1), 0);
+        }
+
+        function getRodMultiplier(rodLvl) {
+            return 1 + ((rodLvl || 1) - 1) * 0.35;
+        }
+
+        // ==========================================
+        // 3. LOBBY, BOTS & SYNC FUNCTIONS
+        // ==========================================
+        window.selectLobbyAvatar = function(emoji, btnEl) {
+            selectedAvatar = emoji;
+            document.querySelectorAll('.avatar-opt').forEach(b => {
+                b.classList.remove('bg-sky-100', 'border-sky-500');
+                b.classList.add('bg-slate-100', 'border-transparent');
+            });
+            btnEl.classList.remove('bg-slate-100', 'border-transparent');
+            btnEl.classList.add('bg-sky-100', 'border-sky-500');
+        };
+
+        window.generateRandomRoom = function() {
+            const num = Math.floor(100 + Math.random() * 900);
+            document.getElementById('input-room-code').value = `LAUT${num}`;
+        };
+
+        window.openLobbyModal = function() {
+            document.getElementById('lobby-modal').classList.remove('hidden');
+        };
+
+        if (localChannel) {
+            localChannel.onmessage = (event) => {
+                const msg = event.data;
+                if (msg && msg.roomCode === currentRoomCode && msg.players) {
+                    roomPlayers = { ...roomPlayers, ...msg.players };
+                    if (msg.latestLog) {
+                        document.getElementById('live-activity-log').textContent = msg.latestLog;
+                    }
+                    updateAllUI();
+                }
+            };
+        }
+
+        function broadcastLocalState(latestLog = null) {
+            if (localChannel && currentRoomCode) {
+                localChannel.postMessage({
+                    roomCode: currentRoomCode,
+                    players: roomPlayers,
+                    latestLog: latestLog
+                });
+            }
+        }
+
+        window.joinWithDemoBots = async function() {
+            const nameEl = document.getElementById('input-player-name');
+            const roomEl = document.getElementById('input-room-code');
+            if (!nameEl.value.trim()) nameEl.value = "Kapten Utama";
+            if (!roomEl.value.trim()) roomEl.value = "KELAS39";
+            await window.joinMultiplayerRoom();
+            await window.spawnClass39Bots();
+        };
+
+        window.spawnClass39Bots = async function() {
+            if (!currentRoomCode) {
+                showToast("Masuk ke ruangan dulu sebelum menambah simulasi siswa!", "warning");
+                return;
+            }
+            const firstNames = [
+                "Sari", "Dimas", "Rina", "Fajar", "Nadia", "Rizky", "Ayu", "Bagas", "Putri", "Ilham",
+                "Dewi", "Arif", "Sinta", "Bayu", "Laras", "Galih", "Tari", "Andi", "Maya", "Reza",
+                "Citra", "Yoga", "Nisa", "Hendra", "Wulan", "Dika", "Fitri", "Rama", "Intan", "Agus",
+                "Melati", "Taufik", "Anisa", "Eko", "Zahra", "Farhan", "Tiara", "Bima"
+            ];
+            const icons = ["🚤", "🚢", "🛥️", "⛵"];
+            const now = Date.now();
+
+            for (let i = 0; i < firstNames.length; i++) {
+                const fname = firstNames[i];
+                const botUid = `bot-siswa-${i + 1}`;
+                const isUpgradedShip = i < 4;
+                const sampleCargo = [];
+
+                if (i % 3 === 0) {
+                    sampleCargo.push({
+                        id: `bf-${i}-1`,
+                        name: "Tuna Sirip Biru Raksasa",
+                        icon: "🐋",
+                        image: "assets/fish/tuna.png",
+                        price: 95,
+                        slots: 3,
+                        sizeLabel: "Besar",
+                        processed: false,
+                        catcherUid: botUid,
+                        catcherName: fname
+                    });
+                } else if (i % 2 === 0) {
+                    sampleCargo.push({
+                        id: `bf-${i}-2`,
+                        name: "Kakap Merah Segar",
+                        icon: "🐟",
+                        image: "assets/fish/snapper.png",
+                        price: 50,
+                        slots: 2,
+                        sizeLabel: "Sedang",
+                        processed: false,
+                        catcherUid: botUid,
+                        catcherName: fname
+                    });
+                }
+
+                const botData = {
+                    uid: botUid,
+                    name: `${fname} (Siswa ${i + 2})`,
+                    avatar: isUpgradedShip ? "🚢" : icons[i % icons.length],
+                    coins: 60 + ((i * 19) % 240),
+                    energy: 55 + ((i * 7) % 45),
+                    maxEnergy: isUpgradedShip ? 125 : 100,
+                    boatLevel: isUpgradedShip ? 2 : 1,
+                    rodLevel: (i % 3) + 1,
+                    maxCargo: isUpgradedShip ? 21 : 15,
+                    cargo: sampleCargo,
+                    location: i % 5 === 0 ? 'port' : 'sea',
+                    hijackedFrom: null,
+                    coopCooldown: 0,
+                    updatedAt: now - i * 1000,
+                    lastEvent: `⛵ ${fname} aktif berlayar di lautan!`
+                };
+
+                roomPlayers[botUid] = botData;
+                if (db && firestoreEnabled) {
+                    try {
+                        const botRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`, botUid);
+                        await setDoc(botRef, botData, { merge: true });
+                    } catch (e) {
+                        firestoreEnabled = false;
+                    }
+                }
+            }
+
+            const eventMsg = `🏫 Simulasi Kelas Penuh aktif! Total ${Object.keys(roomPlayers).length} siswa berada di satu ruangan laut.`;
+            document.getElementById('live-activity-log').textContent = eventMsg;
+            broadcastLocalState(eventMsg);
+            updateAllUI();
+            showToast("38 Siswa simulasi berhasil masuk! Total 39 Kapten aktif di laut.", "success");
+        };
+
+        window.joinMultiplayerRoom = async function() {
+            const nameInput = document.getElementById('input-player-name').value.trim();
+            const roomInput = document.getElementById('input-room-code').value.trim().toUpperCase();
+
+            if (!nameInput) {
+                showToast("Masukkan nama kapten terlebih dahulu!", "error");
+                return;
+            }
+            if (!roomInput) {
+                showToast("Masukkan kode ruangan (misal: LAUT01)!", "error");
+                return;
+            }
+
+            if (!currentUser && auth) {
+                try {
+                    await signInAnonymously(auth);
+                    currentUser = auth.currentUser;
+                } catch (e) {
+                    firestoreEnabled = false;
+                }
+            }
+
+            myUid = currentUser ? currentUser.uid : 'tab-' + crypto.randomUUID().slice(0, 8);
+            currentRoomCode = roomInput;
+
+            const newPlayerState = {
+                uid: myUid,
+                name: nameInput,
+                avatar: selectedAvatar,
+                coins: 80,
+                energy: 100,
+                maxEnergy: 100,
+                boatLevel: 1,
+                rodLevel: 1,
+                maxCargo: 15,
+                cargo: [],
+                location: 'sea',
+                hijackedFrom: null,
+                coopCooldown: 0,
+                updatedAt: Date.now(),
+                lastEvent: `⛵ ${nameInput} baru saja berlayar memasuki perairan ${currentRoomCode}!`
+            };
+
+            if (db && firestoreEnabled) {
+                try {
+                    const playerDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`, myUid);
+                    await setDoc(playerDocRef, newPlayerState, { merge: true });
+
+                    if (unsubscribeRoom) unsubscribeRoom();
+                    const roomColRef = collection(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`);
+                    unsubscribeRoom = onSnapshot(roomColRef, (snapshot) => {
+                        const updatedPlayers = {};
+                        let latestLog = null;
+                        let latestTs = 0;
+
+                        snapshot.forEach((docSnap) => {
+                            const data = docSnap.data();
+                            updatedPlayers[docSnap.id] = data;
+                            if (data.updatedAt && data.updatedAt > latestTs && data.lastEvent) {
+                                latestTs = data.updatedAt;
+                                latestLog = data.lastEvent;
+                            }
+                        });
+
+                        roomPlayers = { ...roomPlayers, ...updatedPlayers };
+                        if (latestLog) {
+                            document.getElementById('live-activity-log').textContent = latestLog;
+                        }
+                        updateAllUI();
+                    }, () => {
+                        firestoreEnabled = false;
+                    });
+                } catch (err) {
+                    firestoreEnabled = false;
+                    roomPlayers[myUid] = newPlayerState;
+                    broadcastLocalState(newPlayerState.lastEvent);
+                    updateAllUI();
+                }
+            } else {
+                roomPlayers[myUid] = newPlayerState;
+                broadcastLocalState(newPlayerState.lastEvent);
+                updateAllUI();
+            }
+
+            document.getElementById('lobby-modal').classList.add('hidden');
+            document.getElementById('room-badge-box').classList.remove('hidden');
+            document.getElementById('active-room-code').textContent = currentRoomCode;
+            showToast(`Berhasil bergabung ke Ruangan ${currentRoomCode}!`, "success");
+        };
+
+        async function syncPlayerUpdate(targetUid, partialData) {
+            if (!roomPlayers[targetUid]) return;
+            roomPlayers[targetUid] = { ...roomPlayers[targetUid], ...partialData };
+            broadcastLocalState(partialData.lastEvent || null);
+            updateAllUI();
+
+            if (db && firestoreEnabled && currentRoomCode) {
+                try {
+                    const ref = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`, targetUid);
+                    await setDoc(ref, partialData, { merge: true });
+                } catch (err) {
+                    firestoreEnabled = false;
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. UI RENDERING & HUD UPDATES
+        // ==========================================
+        function updateAllUI() {
+            const me = getMe();
+            if (!me) return;
+
+            const allPlayersList = Object.values(roomPlayers);
+
+            document.getElementById('player-count-badge').textContent = `${allPlayersList.length} Kapten Online`;
+            document.getElementById('radar-summary-text').textContent = `Total ${allPlayersList.length} Siswa di Laut`;
+
+            // Top 6 Leaderboard + Current User if outside top 6
+            const sortedPlayers = [...allPlayersList].sort((a, b) => (b.coins || 0) - (a.coins || 0));
+            const myRankIndex = sortedPlayers.findIndex(p => p.uid === me.uid);
+            let displayList = sortedPlayers.slice(0, 6);
+            if (myRankIndex >= 6) {
+                displayList = [...sortedPlayers.slice(0, 5), me];
+            }
+
+            const playersBar = document.getElementById('players-bar');
+            playersBar.innerHTML = displayList.map((p) => {
+                const rank = sortedPlayers.findIndex(sp => sp.uid === p.uid) + 1;
+                const isMe = p.uid === me.uid;
+                const used = getUsedCargoSlots(p);
+                const locText = p.location === 'sea' ? '🌊 Laut' : '🏝️ Darat';
+
+                return `
+                    <div class="${isMe ? 'bg-amber-400 text-slate-950 ring-2 ring-white shadow-lg' : 'bg-slate-900/85 text-white border border-white/15'} px-2.5 py-2 rounded-xl flex items-center justify-between gap-1.5 transition">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-xs font-extrabold ${isMe ? 'bg-slate-950 text-amber-300' : 'bg-white/15 text-sky-200'} px-1.5 py-0.5 rounded-md">#${rank}</span>
+                            <div class="truncate">
+                                <p class="font-game font-bold text-xs truncate">${p.name} ${isMe ? '(Kamu)' : ''}</p>
+                                <p class="text-[10px] ${isMe ? 'text-slate-800 font-semibold' : 'text-sky-300'} truncate">${locText} • Kapal Lv.${p.boatLevel} • 📦 ${used}/${p.maxCargo}</p>
+                            </div>
+                        </div>
+                        <span class="font-game font-bold text-xs shrink-0">🪙${p.coins}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Active Captain Dashboard
+            document.getElementById('active-avatar').textContent = me.avatar;
+            document.getElementById('active-captain-name').textContent = `${me.name} (Kapal Lv.${me.boatLevel} • Pancing Lv.${me.rodLevel})`;
+            document.getElementById('active-location-badge').textContent = currentLocation === 'sea' ? '🌊 Di Laut' : '🏝️ Di Darat';
+            document.getElementById('hud-coins').textContent = me.coins;
+
+            if (me.hijackedFrom) {
+                document.getElementById('hijacked-status-badge').classList.remove('hidden');
+                document.getElementById('hijacked-status-badge').textContent = `⚔️ Kapal Rampasan (${me.hijackedFrom})`;
+            } else {
+                document.getElementById('hijacked-status-badge').classList.add('hidden');
+            }
+
+            // Energy Bar
+            const energyPct = Math.max(0, Math.min(100, (me.energy / me.maxEnergy) * 100));
+            document.getElementById('hud-energy-text').textContent = `${me.energy} / ${me.maxEnergy}`;
+            const eBar = document.getElementById('hud-energy-bar');
+            eBar.style.width = `${energyPct}%`;
+            eBar.className = `h-full transition-all duration-300 ${energyPct < 25 ? 'bg-rose-500' : 'bg-emerald-400'}`;
+
+            // Cargo Capacity Bar
+            const shipCargoUsed = getUsedCargoSlots(me);
+            const shipCargoMax = me.maxCargo || 15;
+            const cargoPct = Math.min(100, (shipCargoUsed / shipCargoMax) * 100);
+            document.getElementById('hud-cargo-label').textContent = `📦 Palka Kapalku (Lv.${me.boatLevel})`;
+            document.getElementById('hud-cargo-text').textContent = `${shipCargoUsed} / ${shipCargoMax} Slot`;
+            const cBar = document.getElementById('hud-cargo-bar');
+            cBar.style.width = `${cargoPct}%`;
+            cBar.className = `h-full transition-all duration-300 ${shipCargoUsed >= shipCargoMax ? 'bg-rose-500' : 'bg-sky-400'}`;
+
+            // Sea View Updates
+            document.getElementById('sea-rod-lvl').textContent = `Lv.${me.rodLevel}`;
+            document.getElementById('sea-boat-lvl').textContent = `Lv.${me.boatLevel}`;
+            document.getElementById('sea-boat-emoji').textContent = me.avatar;
+            document.getElementById('sea-ship-banner').innerHTML = me.hijackedFrom
+                ? `<span>⚔️</span> Perairan Terbuka — Kapal Rampasan dari <u>${me.hijackedFrom}</u> (Lv.${me.boatLevel})`
+                : `<span>🎣</span> Perairan Terbuka — Kapal ${me.name} (Lv.${me.boatLevel})`;
+            document.getElementById('sea-ship-subtext').textContent = `Kapasitas Palka: ${me.maxCargo} Slot • Energi Maks: ${me.maxEnergy}. Gunakan Bajak Kapal untuk menukar kapal dengan milik lawan!`;
+
+            document.getElementById('crew-on-board-badges').innerHTML = `
+                <span class="bg-slate-900/80 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                    ${me.avatar} Kapten ${me.name} • Kapal Lv.${me.boatLevel} (${me.maxCargo} Slot)
+                </span>
+            `;
+
+            const coopBtn = document.getElementById('btn-coop-action');
+            const coopLabel = document.getElementById('coop-cooldown-label');
+            if ((me.coopCooldown || 0) > 0) {
+                coopBtn.classList.add('opacity-60');
+                coopLabel.textContent = `Jeda ${me.coopCooldown} aksi lagi`;
+            } else {
+                coopBtn.classList.remove('opacity-60');
+                coopLabel.textContent = `Siap! • Bonus Bersama`;
+            }
+
+            renderPortView(me);
+        }
+
+        function renderPortView(me) {
+            const ownCargo = Array.isArray(me.cargo) ? me.cargo : [];
+            const used = getUsedCargoSlots(me);
+            document.getElementById('port-cargo-used').textContent = used;
+            document.getElementById('port-cargo-max').textContent = me.maxCargo;
+
+            const totalVal = ownCargo.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('port-total-value').textContent = totalVal;
+
+            const cargoContainer = document.getElementById('cargo-list-container');
+            if (ownCargo.length === 0) {
+                cargoContainer.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400 text-xs">Palka kapalmu masih kosong. Ayo melaut untuk menangkap ikan!</div>`;
+            } else {
+                cargoContainer.innerHTML = ownCargo.map((fish, idx) => {
+                    return `
+                        <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                ${renderFishVisual(fish, "w-9 h-9")}
+                                <div class="truncate">
+                                    <p class="font-bold text-xs text-slate-800 truncate">${fish.name} ${fish.processed ? '✨' : ''}</p>
+                                    <p class="text-[10px] text-slate-500 truncate">${fish.sizeLabel} (${fish.slots} slot) • 🪙${fish.price}</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-1 shrink-0">
+                                ${!fish.processed ? `
+                                    <button onclick="processFishAtPort(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                                        🍳 Olah (2x)
+                                    </button>
+                                ` : `<span class="text-[10px] font-bold text-emerald-600 text-center">Siap Jual</span>`}
+                                <button onclick="sellSingleFish(${idx})" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-[10px] font-bold px-2 py-1 rounded-lg">
+                                    💰 Jual
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const boatCost = me.boatLevel * 120;
+            const nextCargo = me.maxCargo + 6;
+            const nextEnergy = me.maxEnergy + 25;
+            document.getElementById('upgrade-boat-desc').textContent = `Saat ini: Lv.${me.boatLevel} (Maks ${me.maxCargo} Slot / ${me.maxEnergy} Energi)`;
+            document.getElementById('btn-upgrade-boat').textContent = `⬆️ Upgrade ke Lv.${me.boatLevel + 1} (${nextCargo} Slot & ${nextEnergy} Energi) — ${boatCost} 🪙`;
+
+            const rodCost = me.rodLevel * 100;
+            const currentBonusPct = Math.round((getRodMultiplier(me.rodLevel) - 1) * 100);
+            const nextBonusPct = Math.round((getRodMultiplier(me.rodLevel + 1) - 1) * 100);
+            document.getElementById('upgrade-rod-desc').textContent = `Saat ini: Lv.${me.rodLevel} (Bonus Harga Ikan +${currentBonusPct}%)`;
+            document.getElementById('btn-upgrade-rod').textContent = `⬆️ Upgrade ke Lv.${me.rodLevel + 1} (Bonus Harga +${nextBonusPct}%) — ${rodCost} 🪙`;
+        }
+
+        window.setLocation = async function(loc) {
+            const me = getMe();
+            if (!me) return;
+
+            currentLocation = loc;
+            const seaBtn = document.getElementById('loc-btn-sea');
+            const portBtn = document.getElementById('loc-btn-port');
+            const seaView = document.getElementById('view-sea');
+            const portView = document.getElementById('view-port');
+
+            if (loc === 'sea') {
+                seaBtn.className = "bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md text-xs sm:text-sm";
+                portBtn.className = "text-white hover:bg-white/10 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-xs sm:text-sm";
+                seaView.classList.remove('hidden');
+                portView.classList.add('hidden');
+            } else {
+                portBtn.className = "bg-amber-500 text-slate-950 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md text-xs sm:text-sm";
+                seaBtn.className = "text-white hover:bg-white/10 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-xs sm:text-sm";
+                portView.classList.remove('hidden');
+                seaView.classList.add('hidden');
+            }
+
+            await syncPlayerUpdate(me.uid, {
+                location: loc,
+                updatedAt: Date.now(),
+                lastEvent: loc === 'port'
+                    ? `🏝️ ${me.name} merapat ke pelabuhan darat.`
+                    : `🌊 ${me.name} kembali berlayar ke laut terbuka.`
+            });
+        };
+
+        // ==========================================
+        // 5. FISHING MECHANIC (SPEED DETERMINES SIZE)
+        // ==========================================
+        window.castFishingLine = async function() {
+            const me = getMe();
+            if (!me) return;
+            if (isLineCast) return;
+
+            const usedSlots = getUsedCargoSlots(me);
+
+            if (usedSlots >= me.maxCargo) {
+                showToast(`Palka kapalmu sudah penuh (${usedSlots}/${me.maxCargo} slot)! Kembali ke darat untuk jual ikan!`, "error");
+                return;
+            }
+            if (me.energy < 15) {
+                showToast("Energi tidak cukup (butuh 15 Energi)! Merapat ke darat untuk istirahat.", "error");
+                return;
+            }
+
+            isLineCast = true;
+            const nextCd = Math.max(0, (me.coopCooldown || 0) - 1);
+            await syncPlayerUpdate(me.uid, {
+                energy: me.energy - 15,
+                coopCooldown: nextCd,
+                updatedAt: Date.now()
+            });
+
+            const btn = document.getElementById('btn-cast-line');
+            const status = document.getElementById('fishing-status-badge');
+            const biteBox = document.getElementById('bite-trigger-container');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            status.textContent = "🪱 Umpan dilempar... Menunggu ikan menyambar...";
+
+            const delay = 1200 + Math.random() * 1400;
+            setTimeout(() => {
+                status.textContent = "🌊 PELAMPUNG BERGERAK! Tarik kail secepatnya!";
+                biteBox.classList.remove('hidden');
+            }, delay);
+        };
+
+        window.triggerFishingQuiz = function() {
+            document.getElementById('bite-trigger-container').classList.add('hidden');
+            const topics = ['biography', 'figurative', 'narrative'];
+            const chosenTopic = topics[Math.floor(Math.random() * topics.length)];
+            openQuizChallenge(chosenTopic, 'fishing', null);
+        };
+
+        // ==========================================
+        // 6. HIJACK/SWAP SHIP, STEAL, SABOTAGE & CO-OP
+        // ==========================================
+        window.openInteractionModal = function(mode) {
+            const me = getMe();
+            if (!me) return;
+
+            if (mode === 'hijack' && me.energy < 25) {
+                showToast("Energi tidak cukup untuk membajak kapal (butuh 25 Energi)!", "error");
+                return;
+            }
+            if ((mode === 'steal' || mode === 'sabotage') && me.energy < 20) {
+                showToast("Energi tidak cukup (butuh 20 Energi)!", "error");
+                return;
+            }
+            if (mode === 'coop') {
+                if ((me.coopCooldown || 0) > 0) {
+                    showToast(`Kerja sama sedang jeda! Tunggu ${me.coopCooldown} giliran memancing lagi.`, "warning");
+                    return;
+                }
+                if (me.energy < 10) {
+                    showToast("Energi tidak cukup untuk kerja sama (butuh 10 Energi)!", "error");
+                    return;
+                }
+            }
+
+            currentInteractionMode = mode;
+            const titleEl = document.getElementById('inter-modal-title');
+            const descEl = document.getElementById('inter-modal-desc');
+            const searchInput = document.getElementById('inter-search-input');
+            searchInput.value = '';
+
+            if (mode === 'hijack') {
+                titleEl.textContent = "⚔️ Bajak & Tukar Kapal Lawan";
+                descEl.textContent = "Jawab soal untuk mengambil alih & menukar kapalmu dengan kapal lawan (-25 Energi)! Fitur kapasitas palka & energi maks lawan langsung jadi milikmu.";
+            } else if (mode === 'steal') {
+                titleEl.textContent = "🏴‍☠️ Curi Ikan Kapal Lawan";
+                descEl.textContent = "Jawab soal Figurative Language untuk mencuri 1 ikan dari kapal target (-20 Energi)!";
+            } else if (mode === 'sabotage') {
+                titleEl.textContent = "💣 Sabotase Jaring Lawan";
+                descEl.textContent = "Jawab soal Narrative Text untuk menguras 30 Energi kapal target (-20 Energi)!";
+            } else {
+                titleEl.textContent = "🤝 Kerja Sama Ekspedisi";
+                descEl.textContent = "Jawab soal Biography untuk memberi bonus koin & energi bagi dirimu dan 1 rekan!";
+            }
+
+            window.filterInteractionTargets();
+            document.getElementById('interaction-modal').classList.remove('hidden');
+        };
+
+        window.filterInteractionTargets = function() {
+            const me = getMe();
+            if (!me) return;
+            const query = document.getElementById('inter-search-input').value.trim().toLowerCase();
+            const listEl = document.getElementById('inter-targets-list');
+
+            let candidates = Object.values(roomPlayers).filter(p => p.uid !== me.uid);
+            if (currentInteractionMode === 'steal') {
+                candidates = candidates.filter(p => Array.isArray(p.cargo) && p.cargo.length > 0);
+            } else if (currentInteractionMode === 'hijack') {
+                // Sort highest boatLevel first so students can spot upgraded ships easily
+                candidates.sort((a, b) => (b.boatLevel || 1) - (a.boatLevel || 1));
+            }
+            if (query) {
+                candidates = candidates.filter(p => p.name.toLowerCase().includes(query));
+            }
+
+            if (candidates.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Tidak ada kapal target yang cocok ditemukan.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = candidates.map(target => {
+                const used = getUsedCargoSlots(target);
+                const betterTag = (currentInteractionMode === 'hijack' && (target.boatLevel || 1) > (me.boatLevel || 1))
+                    ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded ml-1">⬆️ Lebih Canggih!</span>`
+                    : '';
+                return `
+                    <button onclick="executeInteractionTarget('${target.uid}')" class="w-full text-left bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-400 p-3 rounded-2xl flex items-center justify-between transition">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-2xl">${target.avatar}</span>
+                            <div class="truncate">
+                                <p class="font-game font-bold text-sm text-slate-800 truncate">${target.name} ${betterTag}</p>
+                                <p class="text-[11px] text-slate-500">Kapal Lv.${target.boatLevel} (${target.maxCargo} Slot, Maks ${target.maxEnergy} Energi) • 📦 ${used}/${target.maxCargo}</p>
+                            </div>
+                        </div>
+                        <span class="bg-sky-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl shrink-0">Pilih</span>
+                    </button>
+                `;
+            }).join('');
+        };
+
+        window.closeInteractionModal = function() {
+            document.getElementById('interaction-modal').classList.add('hidden');
+        };
+
+        window.executeInteractionTarget = async function(targetUid) {
+            const me = getMe();
+            const target = roomPlayers[targetUid];
+            if (!me || !target) return;
+
+            window.closeInteractionModal();
+
+            if (currentInteractionMode === 'hijack') {
+                await syncPlayerUpdate(me.uid, { energy: me.energy - 25, updatedAt: Date.now() });
+                const topics = ['biography', 'figurative', 'narrative'];
+                const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                openQuizChallenge(randomTopic, 'hijack', targetUid);
+            } else if (currentInteractionMode === 'steal') {
+                await syncPlayerUpdate(me.uid, { energy: me.energy - 20, updatedAt: Date.now() });
+                openQuizChallenge('figurative', 'steal', targetUid);
+            } else if (currentInteractionMode === 'sabotage') {
+                await syncPlayerUpdate(me.uid, { energy: me.energy - 20, updatedAt: Date.now() });
+                openQuizChallenge('narrative', 'sabotage', targetUid);
+            } else if (currentInteractionMode === 'coop') {
+                await syncPlayerUpdate(me.uid, { energy: me.energy - 10, coopCooldown: 3, updatedAt: Date.now() });
+                openQuizChallenge('biography', 'coop', targetUid);
+            }
+        };
+
+        // ==========================================
+        // 7. QUIZ ENGINE & SPEED TIMER
+        // ==========================================
+        function openQuizChallenge(topic, actionType, targetUid) {
+            const pool = QUESTION_BANK[topic];
+            const qObj = pool[Math.floor(Math.random() * pool.length)];
+
+            activeQuiz = {
+                topic,
+                actionType,
+                targetUid,
+                question: qObj,
+                maxSeconds: 60
+            };
+
+            const topicNames = {
+                biography: "📜 Biography Text",
+                figurative: "✨ Figurative Language",
+                narrative: "🐉 Narrative Text"
+            };
+
+            document.getElementById('quiz-topic-badge').textContent = topicNames[topic];
+            document.getElementById('quiz-question-text').textContent = qObj.q;
+
+            const sizeMeterBox = document.getElementById('fish-size-meter-box');
+            if (actionType === 'fishing') {
+                sizeMeterBox.classList.remove('hidden');
+            } else {
+                sizeMeterBox.classList.add('hidden');
+            }
+
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = qObj.options.map((opt, idx) => `
+                <button onclick="submitQuizAnswer(${idx})" class="w-full text-left bg-slate-100 hover:bg-sky-100 border-2 border-slate-200 hover:border-sky-500 p-3.5 rounded-2xl font-semibold text-xs sm:text-sm text-slate-800 transition flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center shrink-0 text-xs">${String.fromCharCode(65 + idx)}</span>
+                    <span>${opt}</span>
+                </button>
+            `).join('');
+
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            quizStartTime = performance.now();
+
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            quizTimerInterval = setInterval(() => {
+                const elapsed = (performance.now() - quizStartTime) / 1000;
+                const remaining = Math.max(0, activeQuiz.maxSeconds - elapsed);
+                const pct = (remaining / activeQuiz.maxSeconds) * 100;
+
+                document.getElementById('quiz-timer-text').textContent = `${remaining.toFixed(1)}s`;
+                const timeBar = document.getElementById('quiz-time-bar');
+                timeBar.style.width = `${pct}%`;
+
+                const sizeLabel = document.getElementById('predicted-size-label');
+                if (elapsed <= 20) {
+                    timeBar.className = "bg-emerald-500 h-full transition-all duration-100";
+                    sizeLabel.textContent = "🐋 RAKSASA (3 Slot • Super Mahal!)";
+                    sizeLabel.className = "text-emerald-600 font-bold";
+                } else if (elapsed <= 40) {
+                    timeBar.className = "bg-amber-500 h-full transition-all duration-100";
+                    sizeLabel.textContent = "🐟 SEDANG (2 Slot • Harga Bagus)";
+                    sizeLabel.className = "text-amber-600 font-bold";
+                } else {
+                    timeBar.className = "bg-rose-500 h-full transition-all duration-100";
+                    sizeLabel.textContent = "🦐 KECIL (1 Slot • Harga Standar)";
+                    sizeLabel.className = "text-rose-600 font-bold";
+                }
+
+                if (remaining <= 0) {
+                    clearInterval(quizTimerInterval);
+                    submitQuizAnswer(-1);
+                }
+            }, 100);
+        }
+
+        window.submitQuizAnswer = async function(selectedIdx) {
+            if (!activeQuiz) return;
+            clearInterval(quizTimerInterval);
+            document.getElementById('quiz-modal').classList.add('hidden');
+
+            const elapsed = (performance.now() - quizStartTime) / 1000;
+            const isCorrect = selectedIdx === activeQuiz.question.answer;
+            const me = getMe();
+
+            if (activeQuiz.actionType === 'fishing') {
+                isLineCast = false;
+                const btn = document.getElementById('btn-cast-line');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                document.getElementById('fishing-status-badge').textContent = "Siap melempar kail (-15 Energi) atau membajak kapal lawan...";
+
+                if (!isCorrect) {
+                    showToast("Jawaban salah atau waktu habis! Ikan berhasil melepaskan diri dari kail.", "error");
+                    activeQuiz = null;
+                    return;
+                }
+
+                let tier = 'small';
+                if (elapsed <= 20) tier = 'large';
+                else if (elapsed <= 40) tier = 'medium';
+
+                const currentUsed = getUsedCargoSlots(me);
+                const availSlots = me.maxCargo - currentUsed;
+
+                if (availSlots <= 0) {
+                    showToast("Palka kapal sudah penuh saat ikan ditarik!", "warning");
+                    activeQuiz = null;
+                    return;
+                }
+
+                if (tier === 'large' && availSlots < 3) tier = availSlots === 2 ? 'medium' : 'small';
+                if (tier === 'medium' && availSlots < 2) tier = 'small';
+
+                const pool = FISH_CATALOG[tier];
+                const template = pool[Math.floor(Math.random() * pool.length)];
+                const finalPrice = Math.round(template.basePrice * getRodMultiplier(me.rodLevel));
+
+                const caughtFish = {
+                    id: `fish-${Date.now()}`,
+                    name: template.name,
+                    icon: template.icon,
+                    image: template.image,
+                    price: finalPrice,
+                    slots: template.slots,
+                    sizeLabel: template.sizeLabel,
+                    processed: false
+                };
+
+                const updatedCargo = [...(me.cargo || []), caughtFish];
+                await syncPlayerUpdate(me.uid, {
+                    cargo: updatedCargo,
+                    updatedAt: Date.now(),
+                    lastEvent: `🎣 ${me.name} menangkap ${caughtFish.icon} ${caughtFish.name} (${caughtFish.sizeLabel}) dalam ${elapsed.toFixed(1)} detik!`
+                });
+
+                showToast(`Mantap (${elapsed.toFixed(1)}s)! Dapat ${caughtFish.icon} ${caughtFish.name} (🪙${caughtFish.price})!`, "success");
+            } else if (activeQuiz.actionType === 'hijack') {
+                const target = roomPlayers[activeQuiz.targetUid];
+                if (!isCorrect) {
+                    showToast("Pembajakan gagal! Awak kapal lawan berhasil mempertahankan kapalnya.", "error");
+                } else if (target) {
+                    // Swap boat specs (boatLevel, maxCargo, maxEnergy, avatar) between me and target
+                    const myOldBoat = {
+                        boatLevel: me.boatLevel || 1,
+                        maxCargo: me.maxCargo || 15,
+                        maxEnergy: me.maxEnergy || 100,
+                        avatar: me.avatar || '⛵'
+                    };
+                    const targetBoat = {
+                        boatLevel: target.boatLevel || 1,
+                        maxCargo: target.maxCargo || 15,
+                        maxEnergy: target.maxEnergy || 100,
+                        avatar: target.avatar || '🚢'
+                    };
+
+                    // Keep existing fish items capped safely within new cargo capacity if needed
+                    const targetNewCargo = [...(target.cargo || [])];
+                    while (targetNewCargo.reduce((s, f) => s + (f.slots || 1), 0) > myOldBoat.maxCargo && targetNewCargo.length > 0) {
+                        targetNewCargo.pop();
+                    }
+
+                    await syncPlayerUpdate(me.uid, {
+                        boatLevel: targetBoat.boatLevel,
+                        maxCargo: targetBoat.maxCargo,
+                        maxEnergy: targetBoat.maxEnergy,
+                        energy: Math.min(targetBoat.maxEnergy, me.energy + 15),
+                        avatar: targetBoat.avatar,
+                        hijackedFrom: target.name,
+                        updatedAt: Date.now()
+                    });
+
+                    await syncPlayerUpdate(target.uid, {
+                        boatLevel: myOldBoat.boatLevel,
+                        maxCargo: myOldBoat.maxCargo,
+                        maxEnergy: myOldBoat.maxEnergy,
+                        energy: Math.min(myOldBoat.maxEnergy, target.energy || 50),
+                        avatar: myOldBoat.avatar,
+                        cargo: targetNewCargo,
+                        hijackedFrom: null,
+                        updatedAt: Date.now(),
+                        lastEvent: `⚔️ DRASTIS! ${me.name} membajak & menukar kapalnya dengan Kapal Lv.${targetBoat.boatLevel} milik ${target.name}!`
+                    });
+
+                    showToast(`BERHASIL! Kamu mengambil alih Kapal Lv.${targetBoat.boatLevel} (${targetBoat.maxCargo} Slot) milik ${target.name}!`, "success");
+                }
+            } else if (activeQuiz.actionType === 'steal') {
+                const target = roomPlayers[activeQuiz.targetUid];
+                if (!isCorrect) {
+                    showToast("Pencurian gagal! Jawabanmu kurang tepat.", "error");
+                } else if (target && Array.isArray(target.cargo) && target.cargo.length > 0) {
+                    const targetCargo = [...target.cargo];
+                    const stolenFish = targetCargo.pop();
+                    const avail = me.maxCargo - getUsedCargoSlots(me);
+
+                    if (avail < stolenFish.slots) {
+                        showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
+                    } else {
+                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now() });
+                        await syncPlayerUpdate(me.uid, {
+                            cargo: [...(me.cargo || []), stolenFish],
+                            updatedAt: Date.now(),
+                            lastEvent: `🏴‍☠️ ${me.name} mencuri ${stolenFish.icon} ${stolenFish.name} dari kapal ${target.name}!`
+                        });
+                        showToast(`Berhasil mencuri ${stolenFish.icon} ${stolenFish.name} dari ${target.name}!`, "success");
+                    }
+                }
+            } else if (activeQuiz.actionType === 'sabotage') {
+                const target = roomPlayers[activeQuiz.targetUid];
+                if (!isCorrect) {
+                    showToast("Sabotase gagal! Jaring lawan tetap aman.", "error");
+                } else if (target) {
+                    const newEnergy = Math.max(0, (target.energy || 0) - 30);
+                    await syncPlayerUpdate(target.uid, {
+                        energy: newEnergy,
+                        updatedAt: Date.now(),
+                        lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
+                    });
+                    showToast(`Sabotase berhasil! Energi ${target.name} berkurang 30!`, "success");
+                }
+            } else if (activeQuiz.actionType === 'coop') {
+                const partner = roomPlayers[activeQuiz.targetUid];
+                if (!isCorrect) {
+                    showToast("Ekspedisi kerja sama gagal karena jawaban salah!", "error");
+                } else if (partner) {
+                    await syncPlayerUpdate(me.uid, {
+                        coins: me.coins + 45,
+                        energy: Math.min(me.maxEnergy, me.energy + 25),
+                        updatedAt: Date.now()
+                    });
+                    await syncPlayerUpdate(partner.uid, {
+                        coins: (partner.coins || 0) + 45,
+                        energy: Math.min(partner.maxEnergy || 100, (partner.energy || 0) + 25),
+                        updatedAt: Date.now(),
+                        lastEvent: `🤝 ${me.name} & ${partner.name} sukses kerja sama ekspedisi (+45 Koin & +25 Energi)!`
+                    });
+                    showToast(`Kerja sama sukses! Kamu & ${partner.name} masing-masing dapat +45 Koin & +25 Energi!`, "success");
+                }
+            }
+
+            activeQuiz = null;
+        };
+
+        // ==========================================
+        // 8. PORT ACTIONS: SELL, PROCESS & UPGRADE
+        // ==========================================
+        window.processFishAtPort = async function(idx) {
+            const me = getMe();
+            if (!me || !me.cargo || !me.cargo[idx]) return;
+            const cargoCopy = [...me.cargo];
+            const item = { ...cargoCopy[idx] };
+            if (item.processed) return;
+
+            item.processed = true;
+            item.name = `${item.name} Fillet`;
+            item.price = Math.round(item.price * 2);
+            cargoCopy[idx] = item;
+
+            await syncPlayerUpdate(me.uid, {
+                cargo: cargoCopy,
+                updatedAt: Date.now(),
+                lastEvent: `🍳 ${me.name} mengolah ${item.name} hingga harganya naik 2x lipat!`
+            });
+            showToast(`Berhasil diolah! Nilai jual naik menjadi 🪙${item.price}!`, "success");
+        };
+
+        window.sellSingleFish = async function(idx) {
+            const me = getMe();
+            if (!me || !me.cargo || !me.cargo[idx]) return;
+            const cargoCopy = [...me.cargo];
+            const [sold] = cargoCopy.splice(idx, 1);
+
+            await syncPlayerUpdate(me.uid, {
+                cargo: cargoCopy,
+                coins: me.coins + sold.price,
+                updatedAt: Date.now(),
+                lastEvent: `💰 ${me.name} menjual ${sold.name} seharga +${sold.price} Koin!`
+            });
+            showToast(`Terjual ${sold.name} seharga +🪙${sold.price}!`, "success");
+        };
+
+        window.sellAllCargo = async function() {
+            const me = getMe();
+            if (!me || !me.cargo || me.cargo.length === 0) {
+                showToast("Tidak ada ikan di palka untuk dijual!", "warning");
+                return;
+            }
+            while (getMe().cargo.length > 0) {
+                await window.sellSingleFish(0);
+            }
+        };
+
+        window.restAtTavern = async function() {
+            const me = getMe();
+            if (!me) return;
+            if (me.energy >= me.maxEnergy) {
+                showToast("Energimu sudah penuh!", "info");
+                return;
+            }
+            if (me.coins < 15) {
+                showToast("Koin tidak cukup (butuh 15 Koin untuk istirahat)!", "error");
+                return;
+            }
+            await syncPlayerUpdate(me.uid, {
+                coins: me.coins - 15,
+                energy: Math.min(me.maxEnergy, me.energy + 50),
+                updatedAt: Date.now()
+            });
+            showToast("Energi pulih +50!", "success");
+        };
+
+        window.upgradeBoat = async function() {
+            const me = getMe();
+            if (!me) return;
+            const cost = me.boatLevel * 120;
+            if (me.coins < cost) {
+                showToast(`Koin belum cukup! Butuh ${cost} Koin.`, "error");
+                return;
+            }
+            const newLvl = me.boatLevel + 1;
+            const newMaxCargo = me.maxCargo + 6;
+            const newMaxEnergy = me.maxEnergy + 25;
+
+            await syncPlayerUpdate(me.uid, {
+                coins: me.coins - cost,
+                boatLevel: newLvl,
+                maxCargo: newMaxCargo,
+                maxEnergy: newMaxEnergy,
+                energy: newMaxEnergy,
+                updatedAt: Date.now(),
+                lastEvent: `🚢 ${me.name} meng-upgrade Kapalnya ke Lv.${newLvl} (${newMaxCargo} Slot Palka)!`
+            });
+            showToast(`Kapal berhasil di-upgrade ke Lv.${newLvl}!`, "success");
+        };
+
+        window.upgradeRod = async function() {
+            const me = getMe();
+            if (!me) return;
+            const cost = me.rodLevel * 100;
+            if (me.coins < cost) {
+                showToast(`Koin belum cukup! Butuh ${cost} Koin.`, "error");
+                return;
+            }
+            const newLvl = me.rodLevel + 1;
+            await syncPlayerUpdate(me.uid, {
+                coins: me.coins - cost,
+                rodLevel: newLvl,
+                updatedAt: Date.now(),
+                lastEvent: `🔱 ${me.name} meng-upgrade Alat Pancing ke Lv.${newLvl}!`
+            });
+            showToast(`Alat pancing berhasil di-upgrade ke Lv.${newLvl}!`, "success");
+        };
+
+        // ==========================================
+        // 9. STUDY BOOK & TOAST NOTIFICATIONS
+        // ==========================================
+        window.openStudyBook = function() {
+            document.getElementById('study-modal').classList.remove('hidden');
+        };
+
+        window.closeStudyBook = function() {
+            document.getElementById('study-modal').classList.add('hidden');
+        };
+
+        window.showStudyTab = function(tabName) {
+            document.querySelectorAll('.study-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.study-tab').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-slate-200', 'text-slate-700');
+            });
+            document.getElementById(`scontent-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`stab-${tabName}`);
+            activeBtn.classList.remove('bg-slate-200', 'text-slate-700');
+            activeBtn.classList.add('bg-indigo-600', 'text-white');
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-300 text-white',
+                error: 'bg-rose-600 border-rose-300 text-white',
+                warning: 'bg-amber-500 border-amber-200 text-slate-950',
+                info: 'bg-slate-900 border-sky-400 text-white'
+            };
+            const toast = document.createElement('div');
+            toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-2xl shadow-xl border-2 text-xs sm:text-sm font-bold transition-all duration-300 pointer-events-auto`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
