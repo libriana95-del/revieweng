@@ -515,6 +515,42 @@
     <!-- Custom Toast / Notification Banner (No alert() used) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
+    <!-- MODAL: FISH CATCH POP-UP WITH IMAGE & ENGLISH FUN FACT -->
+    <div id="fish-catch-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[90] flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-sky-50 to-white text-slate-800 rounded-3xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(14,165,233,0.55)] border-4 border-sky-400 text-center relative overflow-hidden">
+            <span id="catch-size-badge" class="inline-block bg-emerald-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                🐋 TANGKAPAN RAKSASA • 3 SLOT
+            </span>
+            <h3 class="font-game text-2xl font-bold text-sky-950 mt-2">🎉 Ikan Berhasil Ditangkap!</h3>
+            <p id="catch-speed-note" class="text-xs text-slate-500 font-semibold mt-0.5">Dijawab dalam 4.2 detik!</p>
+
+            <!-- Fish Image Display -->
+            <div id="catch-fish-visual" class="my-4 mx-auto w-36 h-36 bg-sky-100/80 rounded-3xl border-2 border-sky-200 flex items-center justify-center p-3 shadow-inner">
+                <!-- PNG or Emoji rendered dynamically -->
+            </div>
+
+            <h4 id="catch-fish-name" class="font-game text-xl font-bold text-slate-900">Tuna Sirip Biru Raksasa</h4>
+            <div class="mt-1 inline-flex items-center gap-2 bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 rounded-full text-xs font-extrabold">
+                <span>Estimasi Harga Jual:</span>
+                <span>🪙 <span id="catch-fish-price">85</span> Koin</span>
+            </div>
+
+            <!-- English Fun Fact Box -->
+            <div class="mt-4 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3.5 text-left">
+                <div class="flex items-center gap-1.5 text-indigo-800 font-game font-bold text-xs uppercase tracking-wider mb-1">
+                    <span>💡</span> <span>Did You Know? (Fun Fact)</span>
+                </div>
+                <p id="catch-fish-funfact" class="text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                    "Bluefin tuna can swim as fast as 70 kilometers per hour across entire oceans!"
+                </p>
+            </div>
+
+            <button onclick="closeFishCatchModal()" class="mt-5 w-full bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-game font-bold py-3 rounded-2xl text-sm shadow-lg transition">
+                Simpan ke Palka Kapal! ⛵
+            </button>
+        </div>
+    </div>
+
     <script>
         let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection;
         // ==========================================
@@ -669,16 +705,64 @@
 
         const FISH_CATALOG = {
             large: [
-                { name: "Tuna Sirip Biru Raksasa", icon: "🐋", image: "assets/fish/tuna.png", basePrice: 85, slots: 3, sizeLabel: "Besar" },
-                { name: "Marlin Raja Samudra", icon: "🦈", image: "assets/fish/marlin.png", basePrice: 95, slots: 3, sizeLabel: "Besar" }
+                {
+                    name: "Tuna Sirip Biru Raksasa",
+                    icon: "🐋",
+                    image: "assets/fish/tuna.png",
+                    basePrice: 85,
+                    slots: 3,
+                    sizeLabel: "Besar",
+                    funFact: "Bluefin tuna are warm-blooded fish that can swim up to 70 km/h and dive over 1,000 meters deep!"
+                },
+                {
+                    name: "Marlin Raja Samudra",
+                    icon: "🦈",
+                    image: "assets/fish/marlin.png",
+                    basePrice: 95,
+                    slots: 3,
+                    sizeLabel: "Besar",
+                    funFact: "The Blue Marlin uses its long, spear-like upper jaw to stun schools of fast-swimming fish while hunting."
+                }
             ],
             medium: [
-                { name: "Kakap Merah Segar", icon: "🐟", image: "assets/fish/snapper.png", basePrice: 45, slots: 2, sizeLabel: "Sedang" },
-                { name: "Kerapu Karang", icon: "🐡", image: "assets/fish/grouper.png", basePrice: 50, slots: 2, sizeLabel: "Sedang" }
+                {
+                    name: "Kakap Merah Segar",
+                    icon: "🐟",
+                    image: "assets/fish/snapper.png",
+                    basePrice: 45,
+                    slots: 2,
+                    sizeLabel: "Sedang",
+                    funFact: "Red snappers can live for more than 50 years in deep coral reefs and rocky ocean habitats."
+                },
+                {
+                    name: "Kerapu Karang",
+                    icon: "🐡",
+                    image: "assets/fish/grouper.png",
+                    basePrice: 50,
+                    slots: 2,
+                    sizeLabel: "Sedang",
+                    funFact: "Groupers swallow their prey whole instead of biting pieces off, using their powerful gills like a vacuum!"
+                }
             ],
             small: [
-                { name: "Ikan Teri & Udang", icon: "🦐", image: "assets/fish/shrimp.png", basePrice: 20, slots: 1, sizeLabel: "Kecil" },
-                { name: "Sarden Kecil", icon: "🐠", image: "assets/fish/sardine.png", basePrice: 22, slots: 1, sizeLabel: "Kecil" }
+                {
+                    name: "Ikan Teri & Udang",
+                    icon: "🦐",
+                    image: "assets/fish/shrimp.png",
+                    basePrice: 20,
+                    slots: 1,
+                    sizeLabel: "Kecil",
+                    funFact: "A shrimp's heart is actually located inside its head, right behind its eyes!"
+                },
+                {
+                    name: "Sarden Kecil",
+                    icon: "🐠",
+                    image: "assets/fish/sardine.png",
+                    basePrice: 22,
+                    slots: 1,
+                    sizeLabel: "Kecil",
+                    funFact: "Sardines travel in giant shimmering 'bait balls' of thousands of fish to confuse ocean predators."
+                }
             ]
         };
 
@@ -704,6 +788,32 @@
         let quizTimerInterval = null;
         let quizStartTime = 0;
         let currentInteractionMode = null;
+
+        function showFishCatchPopup(fish, elapsedSeconds) {
+            const sizeBadgeColors = {
+                Besar: "bg-emerald-500 text-white",
+                Sedang: "bg-amber-500 text-slate-950",
+                Kecil: "bg-sky-500 text-white"
+            };
+            const badgeEl = document.getElementById('catch-size-badge');
+            badgeEl.className = `inline-block ${sizeBadgeColors[fish.sizeLabel] || 'bg-sky-500 text-white'} text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm`;
+            badgeEl.textContent = `${fish.icon} UKURAN ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;
+
+            document.getElementById('catch-speed-note').textContent = `Kecepatan menjawab: ${elapsedSeconds.toFixed(1)} detik!`;
+            document.getElementById('catch-fish-visual').innerHTML = `
+                <img src="${fish.image}" alt="${fish.name}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <span style="display:none;" class="text-7xl">${fish.icon}</span>
+            `;
+            document.getElementById('catch-fish-name').textContent = fish.name;
+            document.getElementById('catch-fish-price').textContent = fish.price;
+            document.getElementById('catch-fish-funfact').textContent = `"${fish.funFact || 'Oceans cover more than 70 percent of Earth’s surface and are home to millions of fascinating species!'}"`;
+
+            document.getElementById('fish-catch-modal').classList.remove('hidden');
+        }
+
+        window.closeFishCatchModal = function() {
+            document.getElementById('fish-catch-modal').classList.add('hidden');
+        };
 
         function getMe() {
             return myUid ? roomPlayers[myUid] : null;
@@ -1438,11 +1548,13 @@
                     icon: template.icon,
                     image: template.image,
                     price: finalPrice,
+                    funFact: template.funFact,
                     slots: template.slots,
                     sizeLabel: template.sizeLabel,
                     processed: false
                 };
 
+                showFishCatchPopup(caughtFish, elapsed);
                 const updatedCargo = [...(me.cargo || []), caughtFish];
                 await syncPlayerUpdate(me.uid, {
                     cargo: updatedCargo,
@@ -1722,7 +1834,7 @@
             }catch(e){}
         }
         function playAlarm(theft=false){
-            try{const a=theft?policeAudio:alarmAudio;a.currentTime=0;Promise.resolve(a.play()).catch(beep);}catch(e){beep();}
+            beep(); try{const a=theft?policeAudio:alarmAudio;a.currentTime=0;Promise.resolve(a.play()).catch(()=>{});}catch(e){beep();}
         }
         function alertPanel(title,msg,emergency=false,canPort=false){
             let panel=document.getElementById('sea-alert-panel');
@@ -1754,6 +1866,6 @@
         }
         window.testSeaAlarm=()=>{unlockAudio();playAlarm();alertPanel('🚨 ALARM TEST','Tes suara darurat.',true);};
     </script>
-<button onclick="testSeaAlarm()" style="position:fixed;bottom:8px;right:8px;z-index:40;background:#0f172a;color:white;border-radius:10px;padding:7px;font-size:11px">🔊 Tes alarm</button>
+<button onclick="testSeaAlarm()" style="position:fixed;bottom:8px;right:8px;z-index:40;background:#0f172a;color:white;border-radius:10px;padding:7px;font-size:11px">🔊 Tes alarm · V8</button>
 </body>
 </html>
