@@ -48,12 +48,13 @@
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
     @media(max-width:639px){#captain-hud{position:sticky;top:0;z-index:35}#captain-hud>div{gap:6px;padding:8px}#captain-hud>div>div:last-child{justify-content:space-between;gap:5px;width:100%}#captain-hud>div>div:last-child>div{min-width:0;flex:1}}
+#room-badge-box,#radar-summary-text{display:none!important}#catch-fish-visual{background:radial-gradient(circle,#fff,#bae6fd)}#fish-catch-modal>div{max-height:90dvh;overflow:auto} .quest-choice button{transition:transform .15s} .quest-choice button:active{transform:scale(.97)} @media(max-width:639px){#captain-hud{top:0;z-index:35;background:#123b69;padding-bottom:5px}#captain-hud>div{border-radius:12px}#captain-hud #active-captain-name{font-size:14px}#fish-catch-modal>div{padding:16px}#catch-fish-visual{width:112px;height:112px}}
 </style>
 </head>
 <body class="text-slate-800 flex flex-col justify-between">
 
     <!-- Top Navigation / Status Bar -->
-    <header class="bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 shadow-lg sticky top-0 z-40 border-b border-sky-400/30">
+    <header class="bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 shadow-lg relative z-30 border-b border-sky-400/30">
         <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
                 <span class="text-3xl">🏴‍☠️</span>
@@ -69,7 +70,7 @@
                     <span>📡 Room:</span> <span id="active-room-code" class="font-mono text-white tracking-wider">---</span>
                 </div>
                 <button onclick="spawnClass39Bots()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow">
-                    <span>🤖</span> <span>Tes 39 Siswa</span>
+                    <span>🤖</span> <span>Mode Demo</span>
                 </button>
                 <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
                     <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
@@ -226,7 +227,7 @@
                     <span class="text-[10px] font-sans font-normal text-amber-100">-20 Energi • Narrative</span>
                 </button>
 
-                <button onclick="activateGuard()" class="bg-teal-700 text-white rounded-xl p-3">🛡 Guard Lv.3+</button><button onclick="restCabin()" class="bg-indigo-700 text-white rounded-xl p-3">🛏 Cabin Lv.5</button><button onclick="showMissions()" class="bg-orange-700 text-white rounded-xl p-3">🏆 Missions</button><!-- 5. Rare Co-op -->
+                <button onclick="activateGuard()" class="bg-teal-700 text-white rounded-xl p-3">🛡 Penjaga Kapal (Lv.3+)</button><button onclick="restCabin()" class="bg-indigo-700 text-white rounded-xl p-3">🛏 Istirahat di Kapal (Lv.5)</button><button onclick="showMissions()" class="bg-orange-700 text-white rounded-xl p-3">🏆 Misi & Penghargaan</button><!-- 5. Rare Co-op -->
                 <button style="display:none" id="btn-coop-action" onclick="openInteractionModal('coop')" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
                     <span class="text-base sm:text-lg">🤝 Kerja Sama</span>
                     <span id="coop-cooldown-label" class="text-[10px] font-sans font-normal text-indigo-200">Siap! • Bonus Bersama</span>
@@ -523,7 +524,7 @@
             <span id="catch-size-badge" class="inline-block bg-emerald-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                 🐋 TANGKAPAN RAKSASA • 3 SLOT
             </span>
-            <h3 class="font-game text-2xl font-bold text-sky-950 mt-2">🎉 Ikan Berhasil Ditangkap!</h3>
+            <h3 id="catch-title" class="font-game text-2xl font-bold text-sky-950 mt-2">🎉 Ikan Berhasil Ditangkap!</h3>
             <p id="catch-speed-note" class="text-xs text-slate-500 font-semibold mt-0.5">Dijawab dalam 4.2 detik!</p>
 
             <!-- Fish Image Display -->
@@ -799,7 +800,7 @@
             };
             const badgeEl = document.getElementById('catch-size-badge');
             badgeEl.className = `inline-block ${sizeBadgeColors[fish.sizeLabel] || 'bg-sky-500 text-white'} text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm`;
-            badgeEl.textContent = `${fish.icon} UKURAN ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;
+            badgeEl.textContent = `${fish.icon} ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;document.getElementById("catch-title").textContent=fish.sizeLabel==="Sampah"?"♻️ Oops! Ocean Trash":fish.sizeLabel==="Harta"?"💎 Treasure Found!":"🎉 Great Catch!";
 
             document.getElementById('catch-speed-note').textContent = `Lucky catch! Level kapal & pancing menentukan peluang.`;
             document.getElementById('catch-fish-visual').innerHTML = `
@@ -943,7 +944,7 @@
                     maxEnergy: isUpgradedShip ? 125 : 100,
                     boatLevel: isUpgradedShip ? 2 : 1,
                     rodLevel: (i % 3) + 1,
-                    maxCargo: isUpgradedShip ? 21 : 15,
+                    maxCargo: isUpgradedShip ? 11 : 5,
                     cargo: sampleCargo,
                     location: i % 5 === 0 ? 'port' : 'sea',
                     hijackedFrom: null,
@@ -1005,7 +1006,7 @@
                 maxEnergy: 100,
                 boatLevel: 1,
                 rodLevel: 1,
-                maxCargo: 15,
+                maxCargo: 5,
                 cargo: [],
                 location: 'sea',
                 hijackedFrom: null,
@@ -1087,7 +1088,7 @@
 
             const allPlayersList = Object.values(roomPlayers);
 
-            document.getElementById('player-count-badge').textContent = `${allPlayersList.length} Kapten Online`;
+            document.getElementById('player-count-badge').textContent = "Lobby";
             document.getElementById('radar-summary-text').textContent = `Total ${allPlayersList.length} Siswa di Laut`;
 
             // Top 6 Leaderboard + Current User if outside top 6
@@ -1138,7 +1139,7 @@
 
             // Cargo Capacity Bar
             const shipCargoUsed = getUsedCargoSlots(me);
-            const shipCargoMax = me.maxCargo || 15;
+            const shipCargoMax = me.maxCargo || 5;
             const cargoPct = Math.min(100, (shipCargoUsed / shipCargoMax) * 100);
             document.getElementById('hud-cargo-label').textContent = `📦 Palka Kapalku (Lv.${me.boatLevel})`;
             document.getElementById('hud-cargo-text').textContent = `${shipCargoUsed} / ${shipCargoMax} Slot`;
@@ -1214,7 +1215,7 @@
 
             const boatCost = ([250,550,1000,1800][me.boatLevel-1]||0);
             document.getElementById("btn-upgrade-boat").disabled=me.boatLevel>=5;document.getElementById("btn-upgrade-rod").disabled=me.rodLevel>=5;
-            const nextCargo = me.maxCargo + 6;
+            const nextCargo = 5 + 6 * me.boatLevel;
             const nextEnergy = me.maxEnergy + 25;
             document.getElementById('upgrade-boat-desc').textContent = `Saat ini: Lv.${me.boatLevel} (Maks ${me.maxCargo} Slot / ${me.maxEnergy} Energi)`;
             document.getElementById('btn-upgrade-boat').textContent = `⬆️ Upgrade ke Lv.${me.boatLevel + 1} (${nextCargo} Slot & ${nextEnergy} Energi) — ${boatCost} 🪙`;
@@ -1571,13 +1572,13 @@ if (activeQuiz.actionType === 'fishing') {
                     // Swap boat specs (boatLevel, maxCargo, maxEnergy, avatar) between me and target
                     const myOldBoat = {
                         boatLevel: me.boatLevel || 1,
-                        maxCargo: me.maxCargo || 15,
+                        maxCargo: me.maxCargo || 5,
                         maxEnergy: me.maxEnergy || 100,
                         avatar: me.avatar || '⛵'
                     };
                     const targetBoat = {
                         boatLevel: target.boatLevel || 1,
-                        maxCargo: target.maxCargo || 15,
+                        maxCargo: target.maxCargo || 5,
                         maxEnergy: target.maxEnergy || 100,
                         avatar: target.avatar || '🚢'
                     };
@@ -1673,11 +1674,11 @@ if (activeQuiz.actionType === 'fishing') {
         // 8. PORT ACTIONS: SELL, PROCESS & UPGRADE
         // ==========================================
         const cookBank=[[{q:'Past form of catch?',options:['catch','caught','catched','catching'],answer:1},{q:'Past form of go?',options:['goed','gone','went','goes'],answer:2}],[{q:'Arrange: yesterday / he / caught / fish',options:['Yesterday caught he fish.','He fish caught yesterday.','Caught fish he yesterday.','He caught fish yesterday.'],answer:3}],[{q:'Although the sea was rough, Mia sailed home. What can we infer?',options:['She stayed ashore.','She was determined.','The sea was calm.','She lost her boat.'],answer:1},{q:'Choose the correct sentence.',options:['If he had known, he would have stayed.','If he knew yesterday, he will stay.','If he had know, he stayed.','If he knows, he would have stay.'],answer:0}]];
-function choicePanel(title,choices){const o=document.createElement('div');o.className='fixed inset-0 bg-slate-950/80 z-[95] flex items-center justify-center p-4';const d=document.createElement('div');d.className='bg-white text-slate-900 rounded-2xl p-5 grid gap-3 w-full max-w-sm';const h=document.createElement('h2');h.textContent=title;d.append(h);o.append(d);for(const [label,fn] of choices){const b=document.createElement('button');b.className='bg-indigo-700 text-white p-3 rounded-xl';b.textContent=label;b.onclick=()=>{o.remove();fn()};d.append(b)}const b=document.createElement('button');b.textContent='Close';b.onclick=()=>o.remove();d.append(b);document.body.append(o)}
-window.processFishAtPort=function(idx){const me=getMe(),item=me?.cargo?.[idx];if(!item||item.processed||item.special||activeQuiz)return;choicePanel('Cooking Challenge',[['Basic · V1 → V2',15,1.5],['Restaurant · Sentence Order',35,2],['Premium · Grammar & Inference',60,3]].map(([name,cost,mult],i)=>[name+' • '+cost+' koin • ×'+mult,()=>{if(getMe().coins<cost)return showToast('Koin tidak cukup','error');openQuizChallenge('cook'+i,'cook',item.id);activeQuiz.cook={cost,mult}}]))};
-window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)return showToast('Guard terbuka Lv.3','warning');if(me.guardUntil>Date.now())return showToast('Guard masih aktif','info');if(me.coins<20)return showToast('Butuh 20 koin','warning');await syncPlayerUpdate(me.uid,{coins:me.coins-20,guardUntil:Date.now()+120000+(me.boatLevel-3)*60000});showToast('Guard aktif','success')};
-window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Cabin terbuka Lv.5','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
-window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Mission & Achievement',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
+function choicePanel(title,choices){const o=document.createElement('div');o.className='fixed inset-0 bg-slate-950/80 z-[95] flex items-center justify-center p-4';const d=document.createElement('div');d.className='quest-choice bg-gradient-to-b from-sky-50 to-white text-slate-900 rounded-3xl p-5 grid gap-3 w-full max-w-sm shadow-2xl border-4 border-sky-400 max-h-[90dvh] overflow-auto';const h=document.createElement('h2');h.textContent=title;h.className='font-game font-bold text-xl text-sky-950 text-center';d.append(h);o.append(d);for(const [label,fn] of choices){const b=document.createElement('button');b.className='bg-slate-800 hover:bg-sky-700 text-white font-bold p-3 rounded-xl shadow';b.textContent=label;b.onclick=()=>{o.remove();fn()};d.append(b)}const b=document.createElement('button');b.textContent='Close';b.onclick=()=>o.remove();d.append(b);document.body.append(o)}
+window.processFishAtPort=function(idx){const me=getMe(),item=me?.cargo?.[idx];if(!item||item.processed||item.special||activeQuiz)return;choicePanel('Cooking Challenge',[['Basic Kitchen',15,1.5],['Seafood Restaurant',35,2],['Premium Restaurant',60,3]].map(([name,cost,mult],i)=>[name+' • '+cost+' koin',()=>{if(getMe().coins<cost)return showToast('Koin tidak cukup','error');openQuizChallenge('cook'+i,'cook',item.id);activeQuiz.cook={cost,mult}}]))};
+window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)return showToast('Penjaga melindungi kapal dari serangan. Terbuka di Lv.3.','warning');if(me.guardUntil>Date.now())return showToast('Guard masih aktif','info');if(me.coins<20)return showToast('Butuh 20 koin','warning');await syncPlayerUpdate(me.uid,{coins:me.coins-20,guardUntil:Date.now()+120000+(me.boatLevel-3)*60000});showToast('Penjaga aktif: kapal terlindungi dari serangan!','success')};
+window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Istirahat di kapal memulihkan 35 energi gratis. Terbuka di Lv.5.','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
+window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Misi & Penghargaan — selesaikan target untuk klaim koin',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
 
         window.sellSingleFish = async function(idx) {
             const me = getMe();
@@ -1733,7 +1734,7 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
                 return;
             }
             if(me.boatLevel>=5)return showToast("Kapal sudah maksimal","info");const newLvl = me.boatLevel + 1;
-            const newMaxCargo = me.maxCargo + 6;
+            const newMaxCargo = 5 + 6 * me.boatLevel;
             const newMaxEnergy = me.maxEnergy + 25;
 
             await syncPlayerUpdate(me.uid, {
@@ -1826,10 +1827,10 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
         function alertPanel(title,msg,emergency=false,canPort=false){
             let panel=document.getElementById('sea-alert-panel');
             if(!panel){panel=document.createElement('div');panel.id='sea-alert-panel';document.body.appendChild(panel);}
-            Object.assign(panel.style,{position:'fixed',top:'12px',left:'50%',transform:'translateX(-50%)',width:'min(92vw,440px)',padding:'16px',borderRadius:'18px',boxShadow:'0 8px 30px #0007',zIndex:'99999',color:'white',background:emergency?'#991b1b':'#065f46',fontFamily:'sans-serif'});
+            Object.assign(panel.style,{position:'fixed',top:'auto',bottom:'56px',left:'50%',transform:'translateX(-50%)',width:'min(92vw,440px)',padding:'16px',borderRadius:'18px',boxShadow:'0 8px 30px #0007',zIndex:'99999',color:'white',background:emergency?'#991b1b':'#065f46',fontFamily:'sans-serif'});
             panel.replaceChildren();
-            const h=document.createElement('strong');h.textContent=title;panel.appendChild(h);
-            const p=document.createElement('p');p.textContent=msg;panel.appendChild(p);
+            const h=document.createElement('strong');h.textContent=title;h.style.cssText='display:block;font-size:17px;letter-spacing:.04em;border-bottom:1px solid #ffffff55;padding-bottom:8px';panel.appendChild(h);
+            const p=document.createElement('p');p.textContent=msg;p.style.cssText='white-space:pre-line;line-height:1.6;margin-top:8px;font-size:14px';panel.appendChild(p);
             if(canPort){const b=document.createElement('button');b.textContent='⚓ Kembali ke pelabuhan';b.style.cssText='background:white;color:#991b1b;padding:8px;border-radius:8px;margin:8px 8px 0 0';b.onclick=()=>window.setLocation('port');panel.appendChild(b);}
             const x=document.createElement('button');x.textContent='Tutup';x.style.cssText='padding:8px;margin-top:8px;border:1px solid white;border-radius:8px';x.onclick=()=>panel.remove();panel.appendChild(x);
             setTimeout(()=>{if(panel.firstChild===h)panel.remove();},canPort?15000:7000);
@@ -1838,7 +1839,7 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
             if(!/membajak|menyabotase|mencuri/.test(log))return;
             if(log===lastAlert&&Date.now()-lastAlertAt<10000)return;
             lastAlert=log;lastAlertAt=Date.now();
-            const theft=log.includes('mencuri');playAlarm(theft);alertPanel(theft?'🚨 FISH THEFT':log.includes('membajak')?'🚨 SHIP HIJACKING':'🚨 SABOTAGE',log,true);
+            const theft=log.includes('mencuri');playAlarm(theft);const match=theft&&log.match(/^(?:🏴‍☠️\s*)?(.+?) mencuri (.+?) dari kapal (.+?)!$/);alertPanel(theft?'🚨 PENCURIAN IKAN':log.includes('membajak')?'🚨 PEMBAJAKAN KAPAL':'🚨 SABOTASE',match?'Pencuri: '+match[1]+'\nKorban: '+match[3]+'\nBarang hilang: '+match[2]:log,true);
         }
         function startSeaEvents(){
             clearInterval(eventTimer);eventTimer=setInterval(runSeaEvent,90000);
@@ -1853,6 +1854,6 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
         }
         window.testSeaAlarm=()=>{unlockAudio();playAlarm();alertPanel('🚨 ALARM TEST','Tes suara darurat.',true);};
     </script>
-<button onclick="testSeaAlarm()" style="position:fixed;bottom:8px;right:8px;z-index:40;background:#0f172a;color:white;border-radius:10px;padding:7px;font-size:11px">🔊 Tes alarm · V8</button>
+<button onclick="testSeaAlarm()" style="position:fixed;bottom:8px;right:8px;z-index:40;background:#0f172a;color:white;border-radius:10px;padding:7px;font-size:11px">🔊 Tes alarm · V10</button>
 </body>
 </html>
