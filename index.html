@@ -49,6 +49,7 @@
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
     @media(max-width:639px){#captain-hud{position:sticky;top:0;z-index:35}#captain-hud>div{gap:6px;padding:8px}#captain-hud>div>div:last-child{justify-content:space-between;gap:5px;width:100%}#captain-hud>div>div:last-child>div{min-width:0;flex:1}}
 #room-badge-box,#radar-summary-text{display:none!important}#catch-fish-visual{background:radial-gradient(circle,#fff,#bae6fd)}#fish-catch-modal>div{max-height:90dvh;overflow:auto} .quest-choice button{transition:transform .15s} .quest-choice button:active{transform:scale(.97)} @media(max-width:639px){#captain-hud{top:0;z-index:35;background:#123b69;padding-bottom:5px}#captain-hud>div{border-radius:12px}#captain-hud #active-captain-name{font-size:14px}#fish-catch-modal>div{padding:16px}#catch-fish-visual{width:112px;height:112px}}
+[onclick*='simulate'],[onclick*='Simulation'],[onclick*='playAlarm']{display:none!important}
 </style>
 </head>
 <body class="text-slate-800 flex flex-col justify-between">
@@ -555,12 +556,12 @@
     </div>
 
     <script>
-        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection;
+        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc;
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-fisher-quest';
-        let firebaseConfig=null; try { if(typeof __firebase_config !== 'undefined') firebaseConfig=typeof __firebase_config==='string'?JSON.parse(__firebase_config):__firebase_config; }catch(e){}
+        let firebaseConfig={"apiKey":"AIzaSyAX16yMLLbjakjN-16S6O0jLbSbigPfWZE","authDomain":"english-fisher-quest.firebaseapp.com","projectId":"english-fisher-quest","storageBucket":"english-fisher-quest.firebasestorage.app","messagingSenderId":"799273316891","appId":"1:799273316891:web:f43bd650bca759dd227ebe"}; try { if(typeof __firebase_config !== 'undefined') firebaseConfig=typeof __firebase_config==='string'?JSON.parse(__firebase_config):__firebase_config; }catch(e){}
 
         let app = null;
         let auth = null;
@@ -570,7 +571,7 @@
         let unsubscribeRoom = null;
         let selectedAvatar = '⛵';
         let firestoreEnabled = false;
-        const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('english_fisher_quest_sync') : null;
+        const localChannel = null;
 
         async function initFirebase() {
             if (!firebaseConfig) {
@@ -580,7 +581,7 @@
             try {
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
-                ({getFirestore,doc,setDoc,onSnapshot,collection}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
+                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -594,7 +595,7 @@
                 document.getElementById('lobby-status-msg').textContent = "✅ Terhubung ke server multiplayer! Masukkan nama & kode ruang.";
             } catch (err) {
                 firestoreEnabled = false;
-                document.getElementById('lobby-status-msg').textContent = "✅ Siap! Mode Sinkronisasi Lokal / Bot Aktif.";
+                document.getElementById("lobby-status-msg").textContent="Connection failed: "+(err.code||err.message);
             }
         }
         initFirebase();
@@ -870,7 +871,7 @@
         };
 
         window.joinMultiplayerRoom = async function() {
-            unlockAudio();
+            unlockAudio(); if(!firestoreEnabled||!currentUser){showToast('Firebase not ready. Refresh and try again.','error');return;}
             const nameInput = document.getElementById('input-player-name').value.trim();
             const roomInput = document.getElementById('input-room-code').value.trim().toUpperCase();
 
@@ -916,7 +917,7 @@
             if (db && firestoreEnabled) {
                 try {
                     const playerDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`, myUid);
-                    await setDoc(playerDocRef, newPlayerState, { merge: true });
+                    const previous=await getDoc(playerDocRef); if(!previous.exists()) await setDoc(playerDocRef,newPlayerState); roomPlayers={ [myUid]:previous.exists()?previous.data():newPlayerState };
 
                     if (unsubscribeRoom) unsubscribeRoom();
                     const roomColRef = collection(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`);
@@ -934,20 +935,13 @@
                             }
                         });
 
-                        roomPlayers = { ...roomPlayers, ...updatedPlayers };
+                        roomPlayers = updatedPlayers;
                         if (latestLog) {
                             document.getElementById('live-activity-log').textContent = latestLog; attackAlert(latestLog);
                         }
                         updateAllUI();
-                    }, () => {
-                        firestoreEnabled = false;
-                    });
-                } catch (err) {
-                    firestoreEnabled = false;
-                    roomPlayers[myUid] = newPlayerState;
-                    broadcastLocalState(newPlayerState.lastEvent);
-                    updateAllUI();
-                }
+                    }, (err) => { firestoreEnabled=false; showToast('Sync failed: '+err.code,'error'); });
+                } catch (err) { showToast('Join failed: '+(err.code||err.message),'error'); return; }
             } else {
                 roomPlayers[myUid] = newPlayerState;
                 broadcastLocalState(newPlayerState.lastEvent);
@@ -961,7 +955,7 @@
             startSeaEvents();
         };
 
-        async function syncPlayerUpdate(targetUid, partialData) {
+        async function syncPlayerUpdate(targetUid, partialData) { if(!firestoreEnabled||targetUid!==myUid){showToast('Action unavailable during connection test','warning');return;}
             if (!roomPlayers[targetUid]) return;
             roomPlayers[targetUid] = { ...roomPlayers[targetUid], ...partialData };
             broadcastLocalState(partialData.lastEvent || null);
@@ -1330,7 +1324,7 @@
         // ==========================================
         const questionHistory={};
 function nextQuestion(pool,topic){const k='efq-bank150-'+(getMe()?.name||getMe()?.uid||'guest');let h=questionHistory[k];if(!h){try{h=JSON.parse(localStorage.getItem(k)||'{}')}catch(e){h={}}questionHistory[k]=h}const ids=pool.map((q,i)=>String(q.id??(topic+'-'+i)));let available=ids.filter(id=>!(h.used||[]).includes(id));const recent=h.recent||[];if(!available.length){h.used=(h.used||[]).filter(id=>!ids.includes(id));available=ids.slice()}const safe=available.filter(id=>!recent.slice(-Math.min(20,ids.length-1)).includes(id));if(safe.length)available=safe;const id=available[Math.floor(Math.random()*available.length)];h.used=[...(h.used||[]),id];h.recent=[...recent,id].slice(-150);try{localStorage.setItem(k,JSON.stringify(h))}catch(e){}const q=pool[ids.indexOf(id)],opts=q.options.map((v,i)=>({v,i}));for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return {...q,options:opts.map(x=>x.v),answer:opts.findIndex(x=>x.i===q.answer)}}
-function openQuizChallenge(topic, actionType, targetUid) {
+function openQuizChallenge(topic, actionType, targetUid) { if(['hijack','steal','sabotage','coop'].includes(actionType)){showToast('PvP disabled during Firebase connection test','info');return;}
             const pool = topic.startsWith("cook")?cookBank[Number(topic.slice(4))]:QUESTION_BANK[topic];
             const qObj = nextQuestion(pool,topic);
 
