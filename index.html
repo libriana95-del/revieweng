@@ -73,6 +73,7 @@
                 <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
                     <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
                 </button>
+                <button id="audio-toggle" onclick="toggleGameAudio()" class="bg-slate-800 text-white px-3 py-1.5 rounded-xl text-xs font-bold" aria-pressed="true">🔊 Audio ON</button>
                 <button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
                     <span>📖</span> <span>Buku Materi</span>
                 </button>
@@ -705,6 +706,46 @@
         let quizStartTime = 0;
         let currentInteractionMode = null;
 
+        // Game audio: browser playback starts after a user gesture.
+        const soundPath = name => 'assets/sounds/' + encodeURIComponent(name);
+        const bgMusic = new Audio(soundPath('One Piece Ending 1 - Memories - SLS Piano Cover.mp3'));
+        bgMusic.loop = true;
+        bgMusic.volume = 0.25;
+        const attackSounds = {
+            sabotage: new Audio(soundPath('Alarm Sound Effect.mp3')),
+            steal: new Audio(soundPath('Police - Sound Effect (HD).mp3'))
+        };
+        Object.values(attackSounds).forEach(audio => { audio.volume = 0.65; });
+        let audioEnabled = true;
+        const heardAttacks = new Set();
+        function startGameMusic() {
+            if (audioEnabled && currentRoomCode && bgMusic.paused) bgMusic.play().catch(() => {});
+        }
+        document.addEventListener('click', startGameMusic);
+        window.toggleGameAudio = function() {
+            audioEnabled = !audioEnabled;
+            const btn = document.getElementById('audio-toggle');
+            btn.textContent = audioEnabled ? '🔊 Audio ON' : '🔇 Audio OFF';
+            btn.setAttribute('aria-pressed', String(audioEnabled));
+            if (audioEnabled) startGameMusic();
+            else {
+                bgMusic.pause();
+                Object.values(attackSounds).forEach(audio => { audio.pause(); audio.currentTime = 0; });
+            }
+        };
+        function checkAttackAudio(me) {
+            const event = me && me.attackNotice;
+            if (!event || !event.id || heardAttacks.has(event.id)) return;
+            heardAttacks.add(event.id);
+            if (Date.now() - event.at > 30000) return;
+            const audio = attackSounds[event.kind];
+            if (audioEnabled && audio) {
+                audio.currentTime = 0;
+                audio.play().catch(() => {});
+            }
+            showToast(event.kind === 'steal' ? '🏴‍☠️ Ikanmu berhasil dicuri!' : '💣 Kapalmu terkena sabotase!', 'warning');
+        }
+
         function getMe() {
             return myUid ? roomPlayers[myUid] : null;
         }
@@ -880,6 +921,7 @@
 
             myUid = currentUser ? currentUser.uid : 'tab-' + crypto.randomUUID().slice(0, 8);
             currentRoomCode = roomInput;
+            startGameMusic();
 
             const newPlayerState = {
                 uid: myUid,
@@ -969,6 +1011,7 @@
             const me = getMe();
             if (!me) return;
 
+            checkAttackAudio(me);
             const allPlayersList = Object.values(roomPlayers);
 
             document.getElementById('player-count-badge').textContent = `${allPlayersList.length} Kapten Online`;
@@ -1508,7 +1551,7 @@
                     if (avail < stolenFish.slots) {
                         showToast(`Berhasil membobol palka ${target.name}, tapi palka kapalmu tidak muat (${stolenFish.slots} slot)!`, "warning");
                     } else {
-                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now() });
+                        await syncPlayerUpdate(target.uid, { cargo: targetCargo, updatedAt: Date.now(), attackNotice: { id: crypto.randomUUID(), kind: "steal", at: Date.now() } });
                         await syncPlayerUpdate(me.uid, {
                             cargo: [...(me.cargo || []), stolenFish],
                             updatedAt: Date.now(),
@@ -1525,6 +1568,7 @@
                     const newEnergy = Math.max(0, (target.energy || 0) - 30);
                     await syncPlayerUpdate(target.uid, {
                         energy: newEnergy,
+                        attackNotice: { id: crypto.randomUUID(), kind: "sabotage", at: Date.now() },
                         updatedAt: Date.now(),
                         lastEvent: `💣 ${me.name} menyabotase jaring kapal ${target.name} (-30 Energi)!`
                     });
