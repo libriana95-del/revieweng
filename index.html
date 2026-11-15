@@ -372,7 +372,7 @@
                     🤖 Simulasi Kelas Penuh (39 Siswa Sekaligus)
                 </button>
             </div>
-            <p id="lobby-status-msg" class="text-[11px] text-center text-slate-400 mt-3">Menghubungkan ke server pelabuhan...</p>
+            <p id="lobby-status-msg" class="text-[11px] text-center text-slate-400 mt-3">V6 · Memulai game...</p>
         </div>
     </div>
 
@@ -569,14 +569,21 @@
         </div>
     </div>
 
-    <script type="module">
+    <script>
+        window.addEventListener('error', function(e) {
+            var el = document.getElementById('lobby-status-msg');
+            if (el && e.message) el.textContent = 'V6 — Error: ' + e.message;
+        });
+    </script>
+    <script>
         let initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection;
 
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-fisher-quest';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        let firebaseConfig = null;
+        try { if (typeof __firebase_config !== 'undefined') firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config; } catch(e) { console.warn(e); }
 
         let app = null;
         let auth = null;
@@ -586,11 +593,12 @@
         let unsubscribeRoom = null;
         let selectedAvatar = '⛵';
         let firestoreEnabled = false;
-        const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('english_fisher_quest_sync') : null;
+        let localChannel = null;
+        try { if (typeof BroadcastChannel !== 'undefined') localChannel = new BroadcastChannel('english_fisher_quest_sync'); } catch(e) { console.warn(e); }
 
         async function initFirebase() {
             if (!firebaseConfig) {
-                document.getElementById('lobby-status-msg').textContent = "✅ Mode Lokal & Multi-Tab Aktif! Masukkan nama & kode ruang.";
+                document.getElementById('lobby-status-msg').textContent = "V6 · Siap bermain! Mode simulasi lokal aktif.";
                 return;
             }
             try {
