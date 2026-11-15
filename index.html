@@ -47,7 +47,8 @@
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
-    </style>
+    @media(max-width:639px){#captain-hud{position:sticky;top:0;z-index:35}#captain-hud>div{gap:6px;padding:8px}#captain-hud>div>div:last-child{justify-content:space-between;gap:5px;width:100%}#captain-hud>div>div:last-child>div{min-width:0;flex:1}}
+</style>
 </head>
 <body class="text-slate-800 flex flex-col justify-between">
 
@@ -80,7 +81,55 @@
         </div>
     </header>
 
-    <!-- Location Switcher (LAUT vs DARAT/PELABUHAN) - MOVED TO TOP FOR IMMEDIATE ACTION FOCUS -->
+    <!-- Active Captain Dashboard (Stats: Koin, Energi, Kapasitas Palka, Status Kapal) -->
+    <section id="captain-hud" class="max-w-6xl mx-auto w-full px-4 pt-2 z-30">
+        <div class="bg-slate-900/85 backdrop-blur-md text-white p-3.5 sm:p-4 rounded-2xl border border-white/15 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div id="active-avatar" class="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-md">⛵</div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[11px] uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold">Kapten Kamu</span>
+                        <span id="active-location-badge" class="text-[11px] uppercase tracking-wider bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md font-bold">🌊 Di Laut</span>
+                        <span id="hijacked-status-badge" class="hidden text-[11px] uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-md font-bold">⚔️ Memakai Kapal Rampasan</span>
+                    </div>
+                    <h2 id="active-captain-name" class="font-game text-lg sm:text-xl font-bold text-white leading-tight mt-0.5">Kapten</h2>
+                </div>
+            </div>
+
+            <!-- Bars: Energy & Cargo Capacity -->
+            <div class="flex flex-wrap items-center gap-4 sm:gap-5 flex-grow justify-end">
+                <!-- Coins -->
+                <div class="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-amber-500/40">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Koin</p>
+                    <p class="font-game font-bold text-amber-400 text-base sm:text-lg">🪙 <span id="hud-coins">80</span></p>
+                </div>
+
+                <!-- Energy Bar -->
+                <div class="min-w-[125px] sm:min-w-[145px]">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span class="text-emerald-300">⚡ Energi</span>
+                        <span id="hud-energy-text" class="text-white">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                        <div id="hud-energy-bar" class="bg-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Cargo Capacity Bar -->
+                <div class="min-w-[140px] sm:min-w-[165px]">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span id="hud-cargo-label" class="text-sky-300">📦 Palka Kapalku</span>
+                        <span id="hud-cargo-text" class="text-white">0 / 15 Slot</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                        <div id="hud-cargo-bar" class="bg-sky-400 h-full transition-all duration-300" style="width: 0%;"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Besar=3 • Sedang=2 • Kecil=1</p>
+                </div>
+            </div>
+        </div>
+    </section>
+<!-- Location Switcher (LAUT vs DARAT/PELABUHAN) - MOVED TO TOP FOR IMMEDIATE ACTION FOCUS -->
     <nav class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
         <div class="bg-white/15 backdrop-blur-md p-1.5 rounded-2xl grid grid-cols-2 gap-2 border border-white/20 shadow-lg">
             <button onclick="setLocation('sea')" id="loc-btn-sea" class="bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md text-xs sm:text-sm">
@@ -104,7 +153,7 @@
                         <span>🎣</span> Perairan Terbuka — Kapal Aktif
                     </h2>
                     <p id="sea-ship-subtext" class="text-xs text-slate-600 mt-0.5">
-                        Tangkap ikan (makin cepat menjawab = makin besar ikannya), atau bajak & tukar kapal canggih milik lawan!
+                        Tangkap ikan (keberuntungan & level peralatan), atau bajak & tukar kapal canggih milik lawan!
                     </p>
                 </div>
                 <div class="flex gap-2">
@@ -177,8 +226,8 @@
                     <span class="text-[10px] font-sans font-normal text-amber-100">-20 Energi • Narrative</span>
                 </button>
 
-                <!-- 5. Rare Co-op -->
-                <button id="btn-coop-action" onclick="openInteractionModal('coop')" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
+                <button onclick="activateGuard()" class="bg-teal-700 text-white rounded-xl p-3">🛡 Guard Lv.3+</button><button onclick="restCabin()" class="bg-indigo-700 text-white rounded-xl p-3">🛏 Cabin Lv.5</button><button onclick="showMissions()" class="bg-orange-700 text-white rounded-xl p-3">🏆 Missions</button><!-- 5. Rare Co-op -->
+                <button style="display:none" id="btn-coop-action" onclick="openInteractionModal('coop')" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
                     <span class="text-base sm:text-lg">🤝 Kerja Sama</span>
                     <span id="coop-cooldown-label" class="text-[10px] font-sans font-normal text-indigo-200">Siap! • Bonus Bersama</span>
                 </button>
@@ -264,62 +313,15 @@
 
     </main>
 
-    <!-- Active Captain Dashboard (Stats: Koin, Energi, Kapasitas Palka, Status Kapal) -->
-    <section class="max-w-6xl mx-auto w-full px-4 pt-2 z-30">
-        <div class="bg-slate-900/85 backdrop-blur-md text-white p-3.5 sm:p-4 rounded-2xl border border-white/15 shadow-xl flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div id="active-avatar" class="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-md">⛵</div>
-                <div>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="text-[11px] uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold">Kapten Kamu</span>
-                        <span id="active-location-badge" class="text-[11px] uppercase tracking-wider bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md font-bold">🌊 Di Laut</span>
-                        <span id="hijacked-status-badge" class="hidden text-[11px] uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-md font-bold">⚔️ Memakai Kapal Rampasan</span>
-                    </div>
-                    <h2 id="active-captain-name" class="font-game text-lg sm:text-xl font-bold text-white leading-tight mt-0.5">Kapten</h2>
-                </div>
-            </div>
-
-            <!-- Bars: Energy & Cargo Capacity -->
-            <div class="flex flex-wrap items-center gap-4 sm:gap-5 flex-grow justify-end">
-                <!-- Coins -->
-                <div class="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-amber-500/40">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Koin</p>
-                    <p class="font-game font-bold text-amber-400 text-base sm:text-lg">🪙 <span id="hud-coins">80</span></p>
-                </div>
-
-                <!-- Energy Bar -->
-                <div class="min-w-[125px] sm:min-w-[145px]">
-                    <div class="flex justify-between text-xs font-bold mb-1">
-                        <span class="text-emerald-300">⚡ Energi</span>
-                        <span id="hud-energy-text" class="text-white">100 / 100</span>
-                    </div>
-                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                        <div id="hud-energy-bar" class="bg-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
-                    </div>
-                </div>
-
-                <!-- Cargo Capacity Bar -->
-                <div class="min-w-[140px] sm:min-w-[165px]">
-                    <div class="flex justify-between text-xs font-bold mb-1">
-                        <span id="hud-cargo-label" class="text-sky-300">📦 Palka Kapalku</span>
-                        <span id="hud-cargo-text" class="text-white">0 / 15 Slot</span>
-                    </div>
-                    <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                        <div id="hud-cargo-bar" class="bg-sky-400 h-full transition-all duration-300" style="width: 0%;"></div>
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Besar=3 • Sedang=2 • Kecil=1</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    
 
     <!-- Leaderboard & Online Captains Radar (MOVED TO BOTTOM AS SECONDARY INFO) -->
     <section class="max-w-6xl mx-auto w-full px-4 pt-3 z-30">
         <div class="flex items-center justify-between mb-1.5 px-1">
-            <span class="text-[11px] font-bold text-sky-100 uppercase tracking-wider">🏆 Top 6 Kapten Terkaya & Posisimu</span>
+            <span class="text-[11px] font-bold text-sky-100 uppercase tracking-wider">🏆 Top 3 Kapten Terkaya</span>
             <span id="radar-summary-text" class="text-[11px] text-amber-200 font-semibold">0 Kapten di Laut</span>
         </div>
-        <div id="players-bar" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div id="players-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <!-- Top 6 + Current player compact cards rendered dynamically -->
         </div>
     </section>
@@ -799,7 +801,7 @@
             badgeEl.className = `inline-block ${sizeBadgeColors[fish.sizeLabel] || 'bg-sky-500 text-white'} text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm`;
             badgeEl.textContent = `${fish.icon} UKURAN ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;
 
-            document.getElementById('catch-speed-note').textContent = `Kecepatan menjawab: ${elapsedSeconds.toFixed(1)} detik!`;
+            document.getElementById('catch-speed-note').textContent = `Lucky catch! Level kapal & pancing menentukan peluang.`;
             document.getElementById('catch-fish-visual').innerHTML = `
                 <img src="${fish.image}" alt="${fish.name}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <span style="display:none;" class="text-7xl">${fish.icon}</span>
@@ -1091,10 +1093,7 @@
             // Top 6 Leaderboard + Current User if outside top 6
             const sortedPlayers = [...allPlayersList].sort((a, b) => (b.coins || 0) - (a.coins || 0));
             const myRankIndex = sortedPlayers.findIndex(p => p.uid === me.uid);
-            let displayList = sortedPlayers.slice(0, 6);
-            if (myRankIndex >= 6) {
-                displayList = [...sortedPlayers.slice(0, 5), me];
-            }
+            let displayList = sortedPlayers.slice(0, 3);
 
             const playersBar = document.getElementById('players-bar');
             playersBar.innerHTML = displayList.map((p) => {
@@ -1199,9 +1198,9 @@
                                 </div>
                             </div>
                             <div class="flex flex-col gap-1 shrink-0">
-                                ${!fish.processed ? `
+                                ${!fish.processed && !fish.special ? `
                                     <button onclick="processFishAtPort(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
-                                        🍳 Olah (2x)
+                                        🍳 Olah
                                     </button>
                                 ` : `<span class="text-[10px] font-bold text-emerald-600 text-center">Siap Jual</span>`}
                                 <button onclick="sellSingleFish(${idx})" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-[10px] font-bold px-2 py-1 rounded-lg">
@@ -1213,13 +1212,14 @@
                 }).join('');
             }
 
-            const boatCost = me.boatLevel * 120;
+            const boatCost = ([250,550,1000,1800][me.boatLevel-1]||0);
+            document.getElementById("btn-upgrade-boat").disabled=me.boatLevel>=5;document.getElementById("btn-upgrade-rod").disabled=me.rodLevel>=5;
             const nextCargo = me.maxCargo + 6;
             const nextEnergy = me.maxEnergy + 25;
             document.getElementById('upgrade-boat-desc').textContent = `Saat ini: Lv.${me.boatLevel} (Maks ${me.maxCargo} Slot / ${me.maxEnergy} Energi)`;
             document.getElementById('btn-upgrade-boat').textContent = `⬆️ Upgrade ke Lv.${me.boatLevel + 1} (${nextCargo} Slot & ${nextEnergy} Energi) — ${boatCost} 🪙`;
 
-            const rodCost = me.rodLevel * 100;
+            const rodCost = ([150,350,750,1400][me.rodLevel-1]||0);
             const currentBonusPct = Math.round((getRodMultiplier(me.rodLevel) - 1) * 100);
             const nextBonusPct = Math.round((getRodMultiplier(me.rodLevel + 1) - 1) * 100);
             document.getElementById('upgrade-rod-desc').textContent = `Saat ini: Lv.${me.rodLevel} (Bonus Harga Ikan +${currentBonusPct}%)`;
@@ -1430,7 +1430,7 @@
         // 7. QUIZ ENGINE & SPEED TIMER
         // ==========================================
         function openQuizChallenge(topic, actionType, targetUid) {
-            const pool = QUESTION_BANK[topic];
+            const pool = topic.startsWith("cook")?cookBank[Number(topic.slice(4))]:QUESTION_BANK[topic];
             const qObj = pool[Math.floor(Math.random() * pool.length)];
 
             activeQuiz = {
@@ -1447,12 +1447,12 @@
                 narrative: "🐉 Narrative Text"
             };
 
-            document.getElementById('quiz-topic-badge').textContent = topicNames[topic];
+            document.getElementById('quiz-topic-badge').textContent = topicNames[topic] || "🍳 Cooking Challenge";
             document.getElementById('quiz-question-text').textContent = qObj.q;
 
             const sizeMeterBox = document.getElementById('fish-size-meter-box');
             if (actionType === 'fishing') {
-                sizeMeterBox.classList.remove('hidden');
+                sizeMeterBox.classList.add('hidden');
             } else {
                 sizeMeterBox.classList.add('hidden');
             }
@@ -1509,7 +1509,9 @@
             const isCorrect = selectedIdx === activeQuiz.question.answer;
             const me = getMe();
 
-            if (activeQuiz.actionType === 'fishing') {
+            if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
+if(['hijack','steal','sabotage'].includes(activeQuiz.actionType)){const target=roomPlayers[activeQuiz.targetUid];if(target&&target.boatLevel>=3&&target.guardUntil>Date.now()){activeQuiz=null;return showToast('Serangan diblokir guard!','warning');}}
+if (activeQuiz.actionType === 'fishing') {
                 isLineCast = false;
                 const btn = document.getElementById('btn-cast-line');
                 btn.disabled = false;
@@ -1522,9 +1524,7 @@
                     return;
                 }
 
-                let tier = 'small';
-                if (elapsed <= 20) tier = 'large';
-                else if (elapsed <= 40) tier = 'medium';
+                const level=Math.max(1,Math.min(5,((me.boatLevel||1)+(me.rodLevel||1))/2)), odds=[[45,35,13,5,2],[35,35,20,7,3],[25,35,25,11,4],[15,30,33,16,6],[5,20,35,30,10]],a=Math.floor(level)-1,f=level-Math.floor(level);let roll=Math.random()*100;let tier=['trash','small','medium','large','treasure'].find((t,i)=>(roll-=odds[a][i]+(odds[Math.min(4,a+1)][i]-odds[a][i])*f)<0)||'treasure';
 
                 const currentUsed = getUsedCargoSlots(me);
                 const availSlots = me.maxCargo - currentUsed;
@@ -1538,7 +1538,7 @@
                 if (tier === 'large' && availSlots < 3) tier = availSlots === 2 ? 'medium' : 'small';
                 if (tier === 'medium' && availSlots < 2) tier = 'small';
 
-                const pool = FISH_CATALOG[tier];
+                const extra={trash:[{name:'Rusty Tin Can',icon:'🥫',image:'assets/fish/trash.png',basePrice:2,slots:1,sizeLabel:'Sampah',funFact:'Metal waste can harm marine animals.'},{name:'Plastic Bottle',icon:'🧴',image:'assets/fish/trash.png',basePrice:2,slots:1,sizeLabel:'Sampah',funFact:'Plastic can break down into microplastics.'}],treasure:[{name:'Sunken Treasure',icon:'💰',image:'assets/fish/treasure.png',basePrice:120,slots:1,sizeLabel:'Harta',funFact:'Shipwrecks reveal clues about maritime history.'}]};const pool=extra[tier]||FISH_CATALOG[tier];
                 const template = pool[Math.floor(Math.random() * pool.length)];
                 const finalPrice = Math.round(template.basePrice * getRodMultiplier(me.rodLevel));
 
@@ -1551,13 +1551,13 @@
                     funFact: template.funFact,
                     slots: template.slots,
                     sizeLabel: template.sizeLabel,
-                    processed: false
+                    processed: false, special: tier==="trash"||tier==="treasure"
                 };
 
                 showFishCatchPopup(caughtFish, elapsed);
                 const updatedCargo = [...(me.cargo || []), caughtFish];
                 await syncPlayerUpdate(me.uid, {
-                    cargo: updatedCargo,
+                    cargo: updatedCargo, catches:(me.catches||0)+(caughtFish.special?0:1), trashCount:(me.trashCount||0)+(tier==="trash"?1:0), treasureCount:(me.treasureCount||0)+(tier==="treasure"?1:0),
                     updatedAt: Date.now(),
                     lastEvent: `🎣 ${me.name} menangkap ${caughtFish.icon} ${caughtFish.name} (${caughtFish.sizeLabel}) dalam ${elapsed.toFixed(1)} detik!`
                 });
@@ -1672,25 +1672,12 @@
         // ==========================================
         // 8. PORT ACTIONS: SELL, PROCESS & UPGRADE
         // ==========================================
-        window.processFishAtPort = async function(idx) {
-            const me = getMe();
-            if (!me || !me.cargo || !me.cargo[idx]) return;
-            const cargoCopy = [...me.cargo];
-            const item = { ...cargoCopy[idx] };
-            if (item.processed) return;
-
-            item.processed = true;
-            item.name = `${item.name} Fillet`;
-            item.price = Math.round(item.price * 2);
-            cargoCopy[idx] = item;
-
-            await syncPlayerUpdate(me.uid, {
-                cargo: cargoCopy,
-                updatedAt: Date.now(),
-                lastEvent: `🍳 ${me.name} mengolah ${item.name} hingga harganya naik 2x lipat!`
-            });
-            showToast(`Berhasil diolah! Nilai jual naik menjadi 🪙${item.price}!`, "success");
-        };
+        const cookBank=[[{q:'Past form of catch?',options:['catch','caught','catched','catching'],answer:1},{q:'Past form of go?',options:['goed','gone','went','goes'],answer:2}],[{q:'Arrange: yesterday / he / caught / fish',options:['Yesterday caught he fish.','He fish caught yesterday.','Caught fish he yesterday.','He caught fish yesterday.'],answer:3}],[{q:'Although the sea was rough, Mia sailed home. What can we infer?',options:['She stayed ashore.','She was determined.','The sea was calm.','She lost her boat.'],answer:1},{q:'Choose the correct sentence.',options:['If he had known, he would have stayed.','If he knew yesterday, he will stay.','If he had know, he stayed.','If he knows, he would have stay.'],answer:0}]];
+function choicePanel(title,choices){const o=document.createElement('div');o.className='fixed inset-0 bg-slate-950/80 z-[95] flex items-center justify-center p-4';const d=document.createElement('div');d.className='bg-white text-slate-900 rounded-2xl p-5 grid gap-3 w-full max-w-sm';const h=document.createElement('h2');h.textContent=title;d.append(h);o.append(d);for(const [label,fn] of choices){const b=document.createElement('button');b.className='bg-indigo-700 text-white p-3 rounded-xl';b.textContent=label;b.onclick=()=>{o.remove();fn()};d.append(b)}const b=document.createElement('button');b.textContent='Close';b.onclick=()=>o.remove();d.append(b);document.body.append(o)}
+window.processFishAtPort=function(idx){const me=getMe(),item=me?.cargo?.[idx];if(!item||item.processed||item.special||activeQuiz)return;choicePanel('Cooking Challenge',[['Basic · V1 → V2',15,1.5],['Restaurant · Sentence Order',35,2],['Premium · Grammar & Inference',60,3]].map(([name,cost,mult],i)=>[name+' • '+cost+' koin • ×'+mult,()=>{if(getMe().coins<cost)return showToast('Koin tidak cukup','error');openQuizChallenge('cook'+i,'cook',item.id);activeQuiz.cook={cost,mult}}]))};
+window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)return showToast('Guard terbuka Lv.3','warning');if(me.guardUntil>Date.now())return showToast('Guard masih aktif','info');if(me.coins<20)return showToast('Butuh 20 koin','warning');await syncPlayerUpdate(me.uid,{coins:me.coins-20,guardUntil:Date.now()+120000+(me.boatLevel-3)*60000});showToast('Guard aktif','success')};
+window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Cabin terbuka Lv.5','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
+window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Mission & Achievement',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
 
         window.sellSingleFish = async function(idx) {
             const me = getMe();
@@ -1740,12 +1727,12 @@
         window.upgradeBoat = async function() {
             const me = getMe();
             if (!me) return;
-            const cost = me.boatLevel * 120;
+            const cost = ([250,550,1000,1800][me.boatLevel-1]||0);
             if (me.coins < cost) {
                 showToast(`Koin belum cukup! Butuh ${cost} Koin.`, "error");
                 return;
             }
-            const newLvl = me.boatLevel + 1;
+            if(me.boatLevel>=5)return showToast("Kapal sudah maksimal","info");const newLvl = me.boatLevel + 1;
             const newMaxCargo = me.maxCargo + 6;
             const newMaxEnergy = me.maxEnergy + 25;
 
@@ -1764,12 +1751,12 @@
         window.upgradeRod = async function() {
             const me = getMe();
             if (!me) return;
-            const cost = me.rodLevel * 100;
+            const cost = ([150,350,750,1400][me.rodLevel-1]||0);
             if (me.coins < cost) {
                 showToast(`Koin belum cukup! Butuh ${cost} Koin.`, "error");
                 return;
             }
-            const newLvl = me.rodLevel + 1;
+            if(me.rodLevel>=5)return showToast("Pancing sudah maksimal","info");const newLvl = me.rodLevel + 1;
             await syncPlayerUpdate(me.uid, {
                 coins: me.coins - cost,
                 rodLevel: newLvl,
