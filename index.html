@@ -75,7 +75,7 @@
                 <button onclick="openLobbyModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition">
                     <span>🌐</span> <span id="player-count-badge">Lobby Multiplayer</span>
                 </button>
-                <button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
+                <button id="music-toggle" onclick="toggleMemories()" class="bg-slate-800 text-sky-200 rounded-xl px-3 py-1.5 text-xs font-bold">♫ Musik ON</button><button onclick="openStudyBook()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-indigo-400">
                     <span>📖</span> <span>Buku Materi</span>
                 </button>
             </div>
@@ -1812,6 +1812,14 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
         let audioCtx, eventTimer, seaPending=false, lastAlert='', lastAlertAt=0;
         const alarmAudio=new Audio(encodeURI('assets/sounds/Alarm Sound Effect.mp3'));
         const policeAudio=new Audio(encodeURI('assets/sounds/Police - Sound Effect (HD).mp3'));
+        const memoriesBgm=new Audio(encodeURI('assets/sounds/One Piece Ending 1 - Memories - SLS Piano Cover.mp3'));
+        memoriesBgm.loop=true;memoriesBgm.volume=.22;
+        let musicEnabled=true;try{musicEnabled=localStorage.getItem('efq-music')!=='off'}catch(e){}
+        function startMemories(){if(musicEnabled&&memoriesBgm.paused)memoriesBgm.play().catch(()=>{});}
+        window.toggleMemories=function(){musicEnabled=!musicEnabled;try{localStorage.setItem('efq-music',musicEnabled?'on':'off')}catch(e){}if(musicEnabled)startMemories();else memoriesBgm.pause();document.getElementById('music-toggle').textContent=musicEnabled?'♫ Musik ON':'♫ Musik OFF';};
+        document.addEventListener('pointerdown',startMemories);
+        document.addEventListener('keydown',startMemories);
+        window.addEventListener('DOMContentLoaded',()=>{document.getElementById('music-toggle').textContent=musicEnabled?'♫ Musik ON':'♫ Musik OFF'});
         function unlockAudio(){
             try { audioCtx ||= new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume().catch(()=>{}); } catch(e){}
         }
