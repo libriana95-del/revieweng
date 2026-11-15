@@ -901,6 +901,7 @@
                 name: nameInput,
                 avatar: selectedAvatar,
                 coins: 80,
+                correct:0,wrong:0,academicTopics:{},
                 energy: 100,
                 maxEnergy: 100,
                 boatLevel: 1,
@@ -1013,7 +1014,7 @@
             document.getElementById('active-avatar').textContent = me.avatar;
             document.getElementById('active-captain-name').textContent = `${me.name} (Kapal Lv.${me.boatLevel} • Pancing Lv.${me.rodLevel})`;
             document.getElementById('active-location-badge').textContent = currentLocation === 'sea' ? '🌊 At Sea' : '🏝️ At Port';
-            document.getElementById('hud-coins').textContent = me.coins;
+            document.getElementById('hud-coins').textContent = me.coins; const total=(me.correct||0)+(me.wrong||0);let mission=document.getElementById('academic-mission');if(!mission){mission=document.createElement('div');mission.id='academic-mission';mission.className='text-xs font-bold bg-sky-950 text-white rounded-lg p-2';document.getElementById('hud-coins').parentElement.after(mission)}mission.textContent='📚 Academic Mission: '+total+'/40 • '+(total?Math.round((me.correct||0)/total*100):0)+'% accuracy'+(total>=40?' ✓ Completed':'');
 
             if (me.hijackedFrom) {
                 document.getElementById('hijacked-status-badge').classList.remove('hidden');
@@ -1403,6 +1404,7 @@ function openQuizChallenge(topic, actionType, targetUid) { if(['hijack','steal',
             const elapsed = (performance.now() - quizStartTime) / 1000;
             const isCorrect = selectedIdx === activeQuiz.question.answer;
             const me = getMe();
+            if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};Object.assign(me,academic);syncPlayerUpdate(me.uid,academic);}
 
             if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
 if(['hijack','steal','sabotage'].includes(activeQuiz.actionType)){const target=roomPlayers[activeQuiz.targetUid];if(target&&target.boatLevel>=3&&target.guardUntil>Date.now()){activeQuiz=null;return showToast('Serangan diblokir guard!','warning');}}
