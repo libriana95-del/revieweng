@@ -1153,7 +1153,7 @@ window.joinMultiplayerRoom = async function() {
         window.castFishingLine = async function() {
             const me = getMe();
             if (!me) return;
-            if (isLineCast) return;
+            if (isLineCast || activeQuiz || classBlocked()) return;
 
             const usedSlots = getUsedCargoSlots(me);
 
@@ -1168,12 +1168,13 @@ window.joinMultiplayerRoom = async function() {
 
             isLineCast = true;
             const nextCd = Math.max(0, (me.coopCooldown || 0) - 1);
-            await syncPlayerUpdate(me.uid, {
+            const castSaved = await syncPlayerUpdate(me.uid, {
                 energy: me.energy - 15,
                 coopCooldown: nextCd,
                 updatedAt: Date.now()
             });
 
+            if(!castSaved){isLineCast=false;return;}
             const btn = document.getElementById('btn-cast-line');
             const status = document.getElementById('fishing-status-badge');
             const biteBox = document.getElementById('bite-trigger-container');
@@ -1190,6 +1191,7 @@ window.joinMultiplayerRoom = async function() {
         };
 
         window.triggerFishingQuiz = function() {
+            if(classBlocked()||activeQuiz||!isLineCast)return;
             document.getElementById('bite-trigger-container').classList.add('hidden');
             const topics = ['biography', 'figurative', 'narrative'];
             const chosenTopic = topics[Math.floor(Math.random() * topics.length)];
@@ -1413,14 +1415,15 @@ async function performPvp(kind,target){
 }
 
 window.submitQuizAnswer = async function(selectedIdx) {
-            if (!activeQuiz || classBlocked()) return;
+            if (!activeQuiz || activeQuiz.submitting || classBlocked()) return;
+            activeQuiz.submitting=true;
             clearInterval(quizTimerInterval);
             document.getElementById('quiz-modal').classList.add('hidden');
 
             const elapsed = (performance.now() - quizStartTime) / 1000;
             const isCorrect = selectedIdx === activeQuiz.question.answer;
             const me = getMe();
-            if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};Object.assign(me,academic);await syncPlayerUpdate(me.uid,academic);}
+            if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};const scoreSaved=await syncPlayerUpdate(me.uid,academic);if(!scoreSaved){activeQuiz=null;isLineCast=false;const b=document.getElementById('btn-cast-line');b.disabled=false;b.classList.remove('opacity-50');return;}}
 
             if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
 if(['hijack','steal','sabotage'].includes(activeQuiz.actionType)){const target=roomPlayers[activeQuiz.targetUid];if(target&&target.boatLevel>=3&&target.guardUntil>Date.now()){activeQuiz=null;return showToast('Serangan diblokir guard!','warning');}}
