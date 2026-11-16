@@ -700,7 +700,7 @@
             };
             const badgeEl = document.getElementById('catch-size-badge');
             badgeEl.className = `inline-block ${sizeBadgeColors[fish.sizeLabel] || 'bg-sky-500 text-white'} text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm`;
-            badgeEl.textContent = `${fish.icon} ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;document.getElementById("catch-title").textContent=fish.sizeLabel==="Sampah"?"♻️ Oops! Ocean Trash":fish.sizeLabel==="Harta"?"💎 Treasure Found!":"🎉 Great Catch!";
+            badgeEl.textContent = `${fish.icon} ${fish.sizeLabel.toUpperCase()} • ${fish.slots} SLOT PALKA`;if(document.getElementById("catch-title"))document.getElementById("catch-title").textContent=fish.sizeLabel==="Sampah"?"♻️ Oops! Ocean Trash":fish.sizeLabel==="Harta"?"💎 Treasure Found!":"🎉 Great Catch!";
 
             document.getElementById('catch-speed-note').textContent = `Lucky catch! Level kapal & pancing menentukan peluang.`;
             document.getElementById('catch-fish-visual').innerHTML = `
@@ -963,23 +963,12 @@ window.joinMultiplayerRoom = async function() {
             startSeaEvents();
         };
 
-        async function syncPlayerUpdate(targetUid, partialData) { if(classBlocked()||!firestoreEnabled||targetUid!==myUid){showToast('Action unavailable during connection test','warning');return;}
-            if (!roomPlayers[targetUid]) return;
-            roomPlayers[targetUid] = { ...roomPlayers[targetUid], ...partialData };
-            broadcastLocalState(partialData.lastEvent || null);
-            updateAllUI();
-
-            if (db && firestoreEnabled && currentRoomCode) {
-                try {
-                    const ref = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`, targetUid);
-                    await setDoc(ref, partialData, { merge: true });
-                } catch (err) {
-                    firestoreEnabled = false;
-                }
-            }
-        }
-
-        // ==========================================
+        async function syncPlayerUpdate(targetUid,partialData){
+ if(classBlocked()||!firestoreEnabled||targetUid!==myUid||!roomPlayers[targetUid]){showToast('Action unavailable: check session and connection','warning');return false;}
+ try{await setDoc(doc(db,'artifacts',appId,'public','data','room_'+currentRoomCode,targetUid),partialData,{merge:true});roomPlayers[targetUid]={...roomPlayers[targetUid],...partialData};updateAllUI();return true;}catch(err){console.error('Save failed',err);showToast('Save failed: '+(err.code||err.message),'error');return false;}
+ }
+ 
+ // ==========================================
         // 4. UI RENDERING & HUD UPDATES
         // ==========================================
         function updateAllUI() {
@@ -1431,7 +1420,7 @@ window.submitQuizAnswer = async function(selectedIdx) {
             const elapsed = (performance.now() - quizStartTime) / 1000;
             const isCorrect = selectedIdx === activeQuiz.question.answer;
             const me = getMe();
-            if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};Object.assign(me,academic);syncPlayerUpdate(me.uid,academic);}
+            if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};Object.assign(me,academic);await syncPlayerUpdate(me.uid,academic);}
 
             if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
 if(['hijack','steal','sabotage'].includes(activeQuiz.actionType)){const target=roomPlayers[activeQuiz.targetUid];if(target&&target.boatLevel>=3&&target.guardUntil>Date.now()){activeQuiz=null;return showToast('Serangan diblokir guard!','warning');}}
@@ -1478,14 +1467,15 @@ if (activeQuiz.actionType === 'fishing') {
                     processed: false, special: tier==="trash"||tier==="treasure"
                 };
 
-                showFishCatchPopup(caughtFish, elapsed);
+                
                 const updatedCargo = [...(me.cargo || []), caughtFish];
-                await syncPlayerUpdate(me.uid, {
+                const savedCatch = await syncPlayerUpdate(me.uid, {
                     cargo: updatedCargo, catches:(me.catches||0)+(caughtFish.special?0:1), trashCount:(me.trashCount||0)+(tier==="trash"?1:0), treasureCount:(me.treasureCount||0)+(tier==="treasure"?1:0),
                     updatedAt: Date.now(),
                     lastEvent: `🎣 ${me.name} menangkap ${caughtFish.icon} ${caughtFish.name} (${caughtFish.sizeLabel}) dalam ${elapsed.toFixed(1)} detik!`
                 });
 
+                if(!savedCatch){activeQuiz=null;return;} try{showFishCatchPopup(caughtFish,elapsed)}catch(e){console.error('Catch popup',e)}
                 showToast(`Mantap (${elapsed.toFixed(1)}s)! Dapat ${caughtFish.icon} ${caughtFish.name} (🪙${caughtFish.price})!`, "success");
             } else if (['hijack','steal','sabotage','coop'].includes(activeQuiz.actionType)) {
  const q=activeQuiz;activeQuiz=null;
