@@ -208,10 +208,10 @@
                 <!-- 1. Fish -->
                 <button id="btn-cast-line" onclick="castFishingLine()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center">
                     <span class="text-base sm:text-lg">🪱 Cast Line</span>
-                    <span class="text-[10px] font-sans font-semibold opacity-80">-15 Energy • Catch Fish</span>
+                    <span class="text-[10px] font-sans font-semibold opacity-80"><span id="cast-cost">-15 Energy</span> • Catch Fish</span>
                 </button>
 
-                <!-- 2. Hijack / Swap Ship -->
+                <button onclick="buySupply('drink')" class="bg-orange-400 text-slate-950 font-bold p-3 rounded-2xl">🥤 Soft Drink<br><small>35 coins • +15 energy</small></button><!-- 2. Hijack / Swap Ship -->
                 <button onclick="openInteractionModal('hijack')" class="bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-game font-bold text-xs sm:text-sm p-3 rounded-2xl shadow-lg transition flex flex-col items-center justify-center text-center border border-purple-400/50">
                     <span class="text-base sm:text-lg">⚔️ Hijack Ship</span>
                     <span class="text-[10px] font-sans font-normal text-purple-100">-25 Energy • Swap Ships</span>
@@ -269,7 +269,7 @@
                     </div>
                 </div>
 
-                <!-- Right Column (5 cols): Shipyard Upgrades (Kapal & Alat Pancing) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-4 text-slate-900"><h3 class="font-bold text-lg">⚙️ Ship Accessories & Supplies</h3><div class="grid grid-cols-2 gap-2 mt-2"><button id="fan-buy" onclick="buySupply('fan')" class="bg-sky-200 rounded-xl p-3 font-bold">🌀 Electric Fan • 350 coins</button><button id="cooler-buy" onclick="buySupply('cooler')" class="bg-cyan-200 rounded-xl p-3 font-bold">🧊 Cooler Box • 450 coins</button><button onclick="buySupply('drink')" class="bg-orange-200 rounded-xl p-3 font-bold">🥤 Soft Drink • 35 coins</button><button onclick="buySupply('sandwich')" class="bg-yellow-200 rounded-xl p-3 font-bold">🥪 Sandwich • 70 coins</button></div><p class="text-xs mt-2">Fan: 2 less energy per cast. Cooler: +10% sale value. Supplies are used immediately.</p></div><!-- Right Column (5 cols): Shipyard Upgrades (Kapal & Alat Pancing) -->
                 <div class="lg:col-span-5 bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border-2 border-slate-700 shadow-md flex flex-col justify-between">
                     <div>
                         <span class="bg-amber-400/20 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase">Galangan Kapal & Toko</span>
@@ -583,7 +583,7 @@
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
                 const rtdb=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js');
-                getFirestore=rtdb.getDatabase;
+                getFirestore=rtdb.getDatabase; window.fisherOffline=()=>rtdb.goOffline(db);
                 const pathOf=parts=>parts[0]==='rooms'?['rooms',...parts.slice(1)].join('/'):['players',...parts.slice(4)].join('/');
                 doc=collection=(db,...parts)=>rtdb.ref(db,pathOf(parts));
                 const normalize=v=>v&&v.uid?{...v,cargo:v.cargo||[],academicTopics:v.academicTopics||{}}:v;
@@ -880,10 +880,10 @@
             showToast("38 Siswa simulasi berhasil masuk! Total 39 Kapten aktif di laut.", "success");
         };
 
-        let sessionStop=null,classSession={},announcementSeen=0,disasterSeen=0;
+        let sessionStop=null,classSession={},announcementSeen=0,disasterSeen=0,sessionDisconnected=false,pendingSaves=0;
 function watchClassSession(){if(sessionStop)sessionStop();classSession={};announcementSeen=0;sessionStop=onSnapshot(doc(db,'rooms',currentRoomCode),snap=>{classSession=snap.data()||{};if(classSession.disasterAt>disasterSeen){disasterSeen=classSession.disasterAt;if(Date.now()-disasterSeen<15000&&!classBlocked())runSeaEvent(classSession.disasterKind)}if(classSession.announcementAt>announcementSeen){announcementSeen=classSession.announcementAt;showToast(classSession.announcement,'info')}renderClassSession()},err=>showToast('Session sync: '+err.code,'error'))}
-function classBlocked(){return classSession.deleted||classSession.status==='PAUSED'||classSession.status==='ENDED'||(classSession.status==='LIVE'&&Date.now()>=classSession.deadline)}
-function renderClassSession(){if(!currentRoomCode)return;let el=document.getElementById('class-clock');if(!el){el=document.createElement('div');el.id='class-clock';el.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:4px 12px;border-radius:0 0 10px 10px;z-index:45;font-size:12px;pointer-events:none';document.body.append(el)}const ms=classSession.status==='LIVE'?Math.max(0,classSession.deadline-Date.now()):classSession.remaining||0;el.textContent=(classSession.status||'FREE PLAY')+(classSession.status==='LIVE'||classSession.status==='PAUSED'?' • '+Math.floor(ms/60000)+':'+String(Math.floor(ms/1000)%60).padStart(2,'0'):'');let shield=document.getElementById('class-shield');if(!shield){shield=document.createElement('div');shield.id='class-shield';shield.style.cssText='position:fixed;inset:0;z-index:99999;background:#0f172aed;color:white;display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;padding:30px';document.body.append(shield)}shield.style.display=classBlocked()?'flex':'none';shield.textContent=classSession.status==='PAUSED'?'Session paused by teacher':'Session ended. Thank you, Captain!'}
+function classBlocked(){return sessionDisconnected||classSession.deleted||classSession.status==='PAUSED'||classSession.status==='ENDED'||(classSession.status==='LIVE'&&Date.now()>=classSession.deadline)}
+function renderClassSession(){if(!currentRoomCode)return;if(!sessionDisconnected&&(classSession.deleted||classSession.status==='ENDED'||(classSession.status==='LIVE'&&Date.now()>=classSession.deadline))){sessionDisconnected=true;const finish=()=>{if(pendingSaves){setTimeout(finish,500);return}if(unsubscribeRoom)unsubscribeRoom();if(sessionStop)sessionStop();clearInterval(eventTimer);clearInterval(quizTimerInterval);window.fisherOffline?.()};finish()}let el=document.getElementById('class-clock');if(!el){el=document.createElement('div');el.id='class-clock';el.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:4px 12px;border-radius:0 0 10px 10px;z-index:45;font-size:12px;pointer-events:none';document.body.append(el)}const ms=classSession.status==='LIVE'?Math.max(0,classSession.deadline-Date.now()):classSession.remaining||0;el.textContent=(classSession.status||'FREE PLAY')+(classSession.status==='LIVE'||classSession.status==='PAUSED'?' • '+Math.floor(ms/60000)+':'+String(Math.floor(ms/1000)%60).padStart(2,'0'):'');let shield=document.getElementById('class-shield');if(!shield){shield=document.createElement('div');shield.id='class-shield';shield.style.cssText='position:fixed;inset:0;z-index:99999;background:#0f172aed;color:white;display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;padding:30px';document.body.append(shield)}shield.style.display=classBlocked()?'flex':'none';shield.textContent=classSession.status==='PAUSED'?'Session paused by teacher':'Session ended. Thank you, Captain!'}
 setInterval(renderClassSession,500);
 window.joinMultiplayerRoom = async function() {
             unlockAudio(); if(!firestoreEnabled||!currentUser){showToast('Firebase not ready. Refresh and try again.','error');return;}
@@ -909,7 +909,7 @@ window.joinMultiplayerRoom = async function() {
             }
 
             myUid = currentUser ? currentUser.uid : 'tab-' + (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)).slice(0,8);
-            currentRoomCode = roomInput;
+            if(sessionDisconnected){showToast('Reload to join a new session','warning');return;} if(!/^[A-Z0-9_-]{1,32}$/.test(roomInput)){showToast('Invalid room code','error');return;} try{const control=(await getDoc(doc(db,'rooms',roomInput))).data()||{};if(control.deleted||control.status==='ENDED'||(control.status==='LIVE'&&Date.now()>=control.deadline)){showToast('Session closed. Ask your teacher for a new room.','warning');return;}classSession=control;}catch(e){showToast('Cannot check session','error');return;} currentRoomCode = roomInput;
 
             const newPlayerState = {
                 uid: myUid,
@@ -946,8 +946,8 @@ window.joinMultiplayerRoom = async function() {
                     };
                     let ownEvent=0;
                     const ownStop=onSnapshot(playerDocRef,snap=>{if(stopped||!snap.exists())return;const data=snap.data();roomPlayers[joinedUid]=data;if(data.pvpAt>ownEvent&&data.pvpBy&&data.pvpBy!==joinedUid){ownEvent=data.pvpAt;attackAlert(data.lastEvent||'')}updateAllUI()},err=>showToast('Player sync: '+err.code,'error'));
-                    const radarTimer=setInterval(refreshPeers,60000);
-                    const initialRadar=setTimeout(refreshPeers,15000+Math.random()*15000);
+                    const radarTimer=setInterval(()=>{if(!document.hidden)refreshPeers()},120000);
+                    const initialRadar=setTimeout(refreshPeers,30000+Math.random()*30000);
                     unsubscribeRoom=()=>{stopped=true;ownStop();clearInterval(radarTimer);clearTimeout(initialRadar)};
                     refreshPeers();
 
@@ -968,7 +968,7 @@ window.joinMultiplayerRoom = async function() {
 
         async function syncPlayerUpdate(targetUid,partialData){
  if(classBlocked()||!firestoreEnabled||targetUid!==myUid||!roomPlayers[targetUid]){showToast('Action unavailable: check session and connection','warning');return false;}
- try{await setDoc(doc(db,'artifacts',appId,'public','data','room_'+currentRoomCode,targetUid),partialData,{merge:true});roomPlayers[targetUid]={...roomPlayers[targetUid],...partialData};updateAllUI();return true;}catch(err){console.error('Save failed',err);showToast('Save failed: '+(err.code||err.message),'error');return false;}
+ pendingSaves++;try{await setDoc(doc(db,'artifacts',appId,'public','data','room_'+currentRoomCode,targetUid),partialData,{merge:true});roomPlayers[targetUid]={...roomPlayers[targetUid],...partialData};updateAllUI();return true;}catch(err){console.error('Save failed',err);showToast('Save failed: '+(err.code||err.message),'error');return false;}finally{pendingSaves--}
  }
  
  // ==========================================
@@ -978,10 +978,10 @@ window.joinMultiplayerRoom = async function() {
             const me = getMe();
             if (!me) return;
 
-            const allPlayersList = Object.values(roomPlayers);
+            const costLabel=document.getElementById('cast-cost');if(costLabel)costLabel.textContent=me.fan?'-13 Energy':'-15 Energy';const fanBtn=document.getElementById('fan-buy');if(fanBtn){fanBtn.disabled=!!me.fan;fanBtn.textContent=me.fan?'🌀 Fan equipped':'🌀 Electric Fan • 350 coins'}const coolerBtn=document.getElementById('cooler-buy');if(coolerBtn){coolerBtn.disabled=!!me.cooler;coolerBtn.textContent=me.cooler?'🧊 Cooler equipped':'🧊 Cooler Box • 450 coins'}const allPlayersList = Object.values(roomPlayers);
 
             document.getElementById('player-count-badge').textContent = "Lobby";
-            document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 1 min`;
+            document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 2 min`;
 
             // Top 6 Leaderboard + Current User if outside top 6
             const sortedPlayers = [...allPlayersList].sort((a, b) => (b.coins || 0) - (a.coins || 0));
@@ -1164,7 +1164,7 @@ window.joinMultiplayerRoom = async function() {
                 showToast(`Palka kapalmu sudah penuh (${usedSlots}/${me.maxCargo} slot)! Kembali ke darat untuk jual ikan!`, "error");
                 return;
             }
-            if (me.energy < 15) {
+            const castCost=me.fan?13:15; if (me.energy < castCost) {
                 showToast("Energi tidak cukup (butuh 15 Energi)! Merapat ke darat untuk istirahat.", "error");
                 return;
             }
@@ -1175,7 +1175,7 @@ window.joinMultiplayerRoom = async function() {
             const slowNotice=setTimeout(()=>{if(isLineCast){castStatus.textContent='Waiting for Firebase connection…';showToast('Server slow. Check internet or Firebase quota.','warning')}},5000);
             const nextCd = Math.max(0, (me.coopCooldown || 0) - 1);
             const castSaved = await syncPlayerUpdate(me.uid, {
-                energy: me.energy - 15,
+                energy: me.energy - castCost,
                 coopCooldown: nextCd,
                 updatedAt: Date.now()
             });
@@ -1506,7 +1506,8 @@ window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)re
 window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Istirahat di kapal memulihkan 35 energi gratis. Terbuka di Lv.5.','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
 window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Missions & Achievements — selesaikan target untuk klaim koin',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
 
-        window.sellSingleFish = async function(idx) {
+        let supplyBusy=false;window.buySupply=async function(kind){const me=getMe(),items={fan:[350,0],cooler:[450,0],drink:[35,15],sandwich:[70,35]},item=items[kind];if(!me||!item||supplyBusy||classBlocked()||activeQuiz||isLineCast)return;if((kind==='fan'||kind==='cooler')&&(me[kind]||me.location!=='land'&&currentLocation==='sea'))return showToast('Buy equipment at harbor','warning');if(me.coins<item[0])return showToast('Not enough coins','warning');if(item[1]&&me.energy>=me.maxEnergy)return showToast('Energy already full','info');supplyBusy=true;try{const patch={coins:me.coins-item[0],updatedAt:Date.now()};if(item[1])patch.energy=Math.min(me.maxEnergy,me.energy+item[1]);else patch[kind]=true;if(await syncPlayerUpdate(me.uid,patch))showToast('Purchase successful!','success')}finally{supplyBusy=false}};
+window.sellSingleFish = async function(idx) {
             const me = getMe();
             if (!me || !me.cargo || !me.cargo[idx]) return;
             const cargoCopy = [...me.cargo];
@@ -1514,7 +1515,7 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
 
             await syncPlayerUpdate(me.uid, {
                 cargo: cargoCopy,
-                coins: me.coins + sold.price,
+                coins: me.coins + Math.round(sold.price*(me.cooler?1.1:1)),
                 updatedAt: Date.now(),
                 lastEvent: `💰 ${me.name} menjual ${sold.name} seharga +${sold.price} Koin!`
             });
@@ -1527,9 +1528,7 @@ window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisher
                 showToast("Tidak ada ikan di palka untuk dijual!", "warning");
                 return;
             }
-            while (getMe().cargo.length > 0) {
-                await window.sellSingleFish(0);
-            }
+            const value=me.cargo.reduce((n,f)=>n+Math.round(f.price*(me.cooler?1.1:1)),0);if(await syncPlayerUpdate(me.uid,{cargo:[],coins:me.coins+value,updatedAt:Date.now()}))showToast('Sold all fish: +'+value+' coins','success');
         };
 
         window.restAtTavern = async function() {
