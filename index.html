@@ -1167,6 +1167,9 @@ window.joinMultiplayerRoom = async function() {
             }
 
             isLineCast = true;
+            const castButton=document.getElementById('btn-cast-line'),castStatus=document.getElementById('fishing-status-badge');
+            castButton.disabled=true;castButton.classList.add('opacity-50');castStatus.textContent='Saving energy…';
+            const slowNotice=setTimeout(()=>{if(isLineCast){castStatus.textContent='Waiting for Firebase connection…';showToast('Server slow. Check internet or Firebase quota.','warning')}},5000);
             const nextCd = Math.max(0, (me.coopCooldown || 0) - 1);
             const castSaved = await syncPlayerUpdate(me.uid, {
                 energy: me.energy - 15,
@@ -1174,7 +1177,7 @@ window.joinMultiplayerRoom = async function() {
                 updatedAt: Date.now()
             });
 
-            if(!castSaved){isLineCast=false;return;}
+            clearTimeout(slowNotice);if(!castSaved){isLineCast=false;castButton.disabled=false;castButton.classList.remove('opacity-50');castStatus.textContent='Cast failed. Try again.';return;}
             const btn = document.getElementById('btn-cast-line');
             const status = document.getElementById('fishing-status-badge');
             const biteBox = document.getElementById('bite-trigger-container');
@@ -1186,13 +1189,13 @@ window.joinMultiplayerRoom = async function() {
             const delay = 1200 + Math.random() * 1400;
             setTimeout(() => {
                 status.textContent = "🌊 PELAMPUNG BERGERAK! Tarik kail secepatnya!";
-                biteBox.classList.remove('hidden');
+                biteBox.classList.remove('hidden');biteBox.style.display='flex';
             }, delay);
         };
 
         window.triggerFishingQuiz = function() {
             if(classBlocked()||activeQuiz||!isLineCast)return;
-            document.getElementById('bite-trigger-container').classList.add('hidden');
+            document.getElementById('bite-trigger-container').classList.add('hidden');document.getElementById('bite-trigger-container').style.display='none';
             const topics = ['biography', 'figurative', 'narrative'];
             const chosenTopic = topics[Math.floor(Math.random() * topics.length)];
             openQuizChallenge(chosenTopic, 'fishing', null);
