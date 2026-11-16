@@ -269,7 +269,7 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-7 bg-white rounded-2xl p-4 text-slate-900"><h3 class="font-bold text-lg">⚙️ Ship Accessories & Supplies</h3><div class="grid grid-cols-2 gap-2 mt-2"><button id="fan-buy" onclick="buySupply('fan')" class="bg-sky-200 rounded-xl p-3 font-bold">🌀 Electric Fan • 350 coins</button><button id="cooler-buy" onclick="buySupply('cooler')" class="bg-cyan-200 rounded-xl p-3 font-bold">🧊 Cooler Box • 450 coins</button><button onclick="buySupply('drink')" class="bg-orange-200 rounded-xl p-3 font-bold">🥤 Soft Drink • 35 coins</button><button onclick="buySupply('sandwich')" class="bg-yellow-200 rounded-xl p-3 font-bold">🥪 Sandwich • 70 coins</button></div><p class="text-xs mt-2">Fan: 2 less energy per cast. Cooler: +10% sale value. Supplies are used immediately.</p></div><!-- Right Column (5 cols): Shipyard Upgrades (Kapal & Alat Pancing) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-4 text-slate-900"><h3 class="font-bold text-lg">⚙️ Ship Accessories & Supplies</h3><div class="grid grid-cols-2 gap-2 mt-2"><button id="fan-buy" onclick="buySupply('fan')" class="bg-sky-200 rounded-xl p-3 font-bold">🌀 Electric Fan • 350 coins</button><button id="cooler-buy" onclick="buySupply('cooler')" class="bg-cyan-200 rounded-xl p-3 font-bold">🧊 Cooler Box • 450 coins</button><button onclick="buySupply('drink')" class="bg-orange-200 rounded-xl p-3 font-bold">🥤 Soft Drink • 35 coins</button><button onclick="buySupply('sandwich')" class="bg-yellow-200 rounded-xl p-3 font-bold">🥪 Sandwich • 70 coins</button></div><p class="text-xs mt-2">Fan: 2 less energy per cast. Cooler: +10% sale value. Supplies are used immediately.</p><div class="grid grid-cols-2 gap-2 mt-2"><button onclick="buySupply('canopy')" class="bg-amber-200 rounded-xl p-3 font-bold">⛱️ Sun Canopy • 250 coins</button><button onclick="buySupply('repair')" class="bg-red-200 rounded-xl p-3 font-bold">🧰 Repair Kit • 100 coins</button><button onclick="buySupply('bait')" class="bg-green-200 rounded-xl p-3 font-bold">🪱 Premium Bait • 75 coins</button></div><p id="extra-status" class="text-xs mt-2"></p></div><!-- Right Column (5 cols): Shipyard Upgrades (Kapal & Alat Pancing) -->
                 <div class="lg:col-span-5 bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border-2 border-slate-700 shadow-md flex flex-col justify-between">
                     <div>
                         <span class="bg-amber-400/20 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase">Galangan Kapal & Toko</span>
@@ -978,7 +978,7 @@ window.joinMultiplayerRoom = async function() {
             const me = getMe();
             if (!me) return;
 
-            const costLabel=document.getElementById('cast-cost');if(costLabel)costLabel.textContent=me.fan?'-13 Energy':'-15 Energy';const fanBtn=document.getElementById('fan-buy');if(fanBtn){fanBtn.disabled=!!me.fan;fanBtn.textContent=me.fan?'🌀 Fan equipped':'🌀 Electric Fan • 350 coins'}const coolerBtn=document.getElementById('cooler-buy');if(coolerBtn){coolerBtn.disabled=!!me.cooler;coolerBtn.textContent=me.cooler?'🧊 Cooler equipped':'🧊 Cooler Box • 450 coins'}const allPlayersList = Object.values(roomPlayers);
+            const costLabel=document.getElementById('cast-cost');if(costLabel)costLabel.textContent='-'+((me.fan?13:15)+(me.damage?3:0))+' Energy';const es=document.getElementById('extra-status');if(es)es.textContent=(me.canopy?'Canopy equipped • ':'')+'Bait casts: '+(me.bait||0)+' • '+(me.damage?'Ship damaged: +3 energy per cast':'Ship healthy');const fanBtn=document.getElementById('fan-buy');if(fanBtn){fanBtn.disabled=!!me.fan;fanBtn.textContent=me.fan?'🌀 Fan equipped':'🌀 Electric Fan • 350 coins'}const coolerBtn=document.getElementById('cooler-buy');if(coolerBtn){coolerBtn.disabled=!!me.cooler;coolerBtn.textContent=me.cooler?'🧊 Cooler equipped':'🧊 Cooler Box • 450 coins'}const allPlayersList = Object.values(roomPlayers);
 
             document.getElementById('player-count-badge').textContent = "Lobby";
             document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 2 min`;
@@ -1164,7 +1164,7 @@ window.joinMultiplayerRoom = async function() {
                 showToast(`Palka kapalmu sudah penuh (${usedSlots}/${me.maxCargo} slot)! Kembali ke darat untuk jual ikan!`, "error");
                 return;
             }
-            const castCost=me.fan?13:15; if (me.energy < castCost) {
+            const castCost=(me.fan?13:15)+(me.damage?3:0); if (me.energy < castCost) {
                 showToast("Energi tidak cukup (butuh 15 Energi)! Merapat ke darat untuk istirahat.", "error");
                 return;
             }
@@ -1176,6 +1176,7 @@ window.joinMultiplayerRoom = async function() {
             const nextCd = Math.max(0, (me.coopCooldown || 0) - 1);
             const castSaved = await syncPlayerUpdate(me.uid, {
                 energy: me.energy - castCost,
+                bait:Math.max(0,(me.bait||0)-1),baitCast:(me.bait||0)>0,
                 coopCooldown: nextCd,
                 updatedAt: Date.now()
             });
@@ -1431,7 +1432,8 @@ window.submitQuizAnswer = async function(selectedIdx) {
             const me = getMe();
             if(['biography','figurative','narrative'].includes(activeQuiz.topic)){const topic=activeQuiz.topic;const stats={...(me.academicTopics||{})};const t=stats[topic]||{correct:0,wrong:0};stats[topic]={correct:t.correct+(isCorrect?1:0),wrong:t.wrong+(isCorrect?0:1)};const academic={academicTopics:stats,correct:(me.correct||0)+(isCorrect?1:0),wrong:(me.wrong||0)+(isCorrect?0:1)};const scoreSaved=await syncPlayerUpdate(me.uid,academic);if(!scoreSaved){activeQuiz=null;isLineCast=false;const b=document.getElementById('btn-cast-line');b.disabled=false;b.classList.remove('opacity-50');return;}}
 
-            if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
+            if(activeQuiz.actionType==='encounter'){activeQuiz=null;if(isCorrect){const p=getMe();if(await syncPlayerUpdate(p.uid,{coins:p.coins+60}))showToast('Mission complete! +60 coins','success')}else showToast('Mission failed','warning');return;}
+if(activeQuiz.actionType==='cook'){const q=activeQuiz;activeQuiz=null;if(!isCorrect)return showToast('Jawaban salah; ikan tetap utuh','error');const idx=(me.cargo||[]).findIndex(i=>i.id===q.targetUid&&!i.processed&&!i.special);if(idx<0||me.coins<q.cook.cost)return showToast('Ikan atau koin tidak tersedia','warning');const cargo=[...me.cargo];cargo[idx]={...cargo[idx],processed:true,name:cargo[idx].name+' Fillet',price:Math.round(cargo[idx].price*q.cook.mult)};await syncPlayerUpdate(me.uid,{cargo,coins:me.coins-q.cook.cost,cooked:(me.cooked||0)+1});return showToast('Ikan berhasil diolah!','success');}
 if(['hijack','steal','sabotage'].includes(activeQuiz.actionType)){const target=roomPlayers[activeQuiz.targetUid];if(target&&target.boatLevel>=3&&target.guardUntil>Date.now()){activeQuiz=null;return showToast('Serangan diblokir guard!','warning');}}
 if (activeQuiz.actionType === 'fishing') {
                 isLineCast = false;
@@ -1446,7 +1448,7 @@ if (activeQuiz.actionType === 'fishing') {
                     return;
                 }
 
-                const level=Math.max(1,Math.min(5,((me.boatLevel||1)+(me.rodLevel||1))/2)), odds=[[45,35,13,5,2],[35,35,20,7,3],[25,35,25,11,4],[15,30,33,16,6],[5,20,35,30,10]],a=Math.floor(level)-1,f=level-Math.floor(level);let roll=Math.random()*100;let tier=['trash','small','medium','large','treasure'].find((t,i)=>(roll-=odds[a][i]+(odds[Math.min(4,a+1)][i]-odds[a][i])*f)<0)||'treasure';
+                const level=Math.max(1,Math.min(5,((me.boatLevel||1)+(me.rodLevel||1))/2)), odds=[[45,35,13,5,2],[35,35,20,7,3],[25,35,25,11,4],[15,30,33,16,6],[5,20,35,30,10]],a=Math.floor(level)-1,f=level-Math.floor(level);let roll=Math.min(99.999,Math.random()*100+(me.baitCast?12:0)+(me.migrationUntil>Date.now()?8:0));let tier=['trash','small','medium','large','treasure'].find((t,i)=>(roll-=odds[a][i]+(odds[Math.min(4,a+1)][i]-odds[a][i])*f)<0)||'treasure';
 
                 const currentUsed = getUsedCargoSlots(me);
                 const availSlots = me.maxCargo - currentUsed;
@@ -1506,7 +1508,7 @@ window.activateGuard=async function(){const me=getMe();if(!me||me.boatLevel<3)re
 window.restCabin=async function(){const me=getMe();if(!me||me.boatLevel<5)return showToast('Istirahat di kapal memulihkan 35 energi gratis. Terbuka di Lv.5.','warning');if(me.cabinUntil>Date.now()||me.energy>=me.maxEnergy)return showToast('Cabin belum siap atau energi penuh','info');await syncPlayerUpdate(me.uid,{energy:Math.min(me.maxEnergy,me.energy+35),cabinUntil:Date.now()+180000});showToast('Energi +35','success')};
 window.showMissions=function(){const me=getMe();if(!me)return;const ms=[['Fisherman','catches',10,100],['Ocean Guardian','trashCount',5,75],['Treasure Hunter','treasureCount',3,150],['Master Chef','cooked',5,120],['Ocean Emperor','boatLevel',5,250]];choicePanel('Missions & Achievements — selesaikan target untuk klaim koin',ms.map(([name,key,goal,prize])=>{const claimed=!!me.missionClaims?.[key];return [name+' '+Math.min(me[key]||0,goal)+'/'+goal+' • '+(claimed?'Claimed':prize+' coins'),async()=>{const now=getMe();if(now.missionClaims?.[key]||(now[key]||0)<goal)return showToast('Misi belum selesai atau sudah diklaim','info');await syncPlayerUpdate(now.uid,{coins:now.coins+prize,missionClaims:{...(now.missionClaims||{}),[key]:true}});showToast('Achievement unlocked!','success')}]}))};
 
-        let supplyBusy=false;window.buySupply=async function(kind){const me=getMe(),items={fan:[350,0],cooler:[450,0],drink:[35,15],sandwich:[70,35]},item=items[kind];if(!me||!item||supplyBusy||classBlocked()||activeQuiz||isLineCast)return;if((kind==='fan'||kind==='cooler')&&(me[kind]||me.location!=='land'&&currentLocation==='sea'))return showToast('Buy equipment at harbor','warning');if(me.coins<item[0])return showToast('Not enough coins','warning');if(item[1]&&me.energy>=me.maxEnergy)return showToast('Energy already full','info');supplyBusy=true;try{const patch={coins:me.coins-item[0],updatedAt:Date.now()};if(item[1])patch.energy=Math.min(me.maxEnergy,me.energy+item[1]);else patch[kind]=true;if(await syncPlayerUpdate(me.uid,patch))showToast('Purchase successful!','success')}finally{supplyBusy=false}};
+        let supplyBusy=false;window.buySupply=async function(kind){const me=getMe(),items={fan:[350,0],cooler:[450,0],drink:[35,15],sandwich:[70,35],canopy:[250,0],repair:[100,0],bait:[75,0]},item=items[kind];if(!me||!item||supplyBusy||classBlocked()||activeQuiz||isLineCast)return;if((['fan','cooler','canopy'].includes(kind))&&(me[kind]||currentLocation==='sea'))return showToast('Buy equipment at harbor','warning');if(me.coins<item[0])return showToast('Not enough coins','warning');if(kind==='repair'&&!me.damage)return showToast('No damage to repair','info');if(kind==='bait'&&(me.bait||0)>0)return showToast('Bait already active','info');if(item[1]&&me.energy>=me.maxEnergy)return showToast('Energy already full','info');supplyBusy=true;try{const patch={coins:me.coins-item[0],updatedAt:Date.now()};if(item[1])patch.energy=Math.min(me.maxEnergy,me.energy+item[1]);else if(kind==='repair')patch.damage=0;else if(kind==='bait')patch.bait=3;else patch[kind]=true;if(await syncPlayerUpdate(me.uid,patch))showToast('Purchase successful!','success')}finally{supplyBusy=false}};
 window.sellSingleFish = async function(idx) {
             const me = getMe();
             if (!me || !me.cargo || !me.cargo[idx]) return;
@@ -1679,11 +1681,11 @@ window.sellSingleFish = async function(idx) {
         }
         function runSeaEvent(forced){
             const me=getMe();if(classBlocked()||!me||seaPending||(activeQuiz&&!Number.isInteger(forced))||currentLocation!=='sea')return;
-            const pick=Number.isInteger(forced)?forced:Math.floor(Math.random()*6);
-            if(pick>=4){const coins=pick===4?35:20;alertPanel(pick===4?'✨ LOST TREASURE':'🐟 FISH MIGRATION','Bonus '+coins+' koin!');syncPlayerUpdate(me.uid,{coins:me.coins+coins,updatedAt:Date.now()});return;}
+            const pick=Number.isInteger(forced)?forced:Math.floor(Math.random()*10);
+            if(pick>=4){if(pick===4){const coins=20+Math.floor(Math.random()*51);alertPanel('✨ FLOATING TREASURE','Bonus '+coins+' coins!');syncPlayerUpdate(me.uid,{coins:me.coins+coins});}else if(pick===5){alertPanel('🐟 FISH MIGRATION','Better catch odds for 60 seconds!');syncPlayerUpdate(me.uid,{migrationUntil:Date.now()+60000});}else if(pick===6){choicePanel('🚢 Traveling merchant',[['Discount drink • 20 coins',async()=>{const p=getMe();if(p.coins>=20&&p.energy<p.maxEnergy&&!classBlocked())await syncPlayerUpdate(p.uid,{coins:p.coins-20,energy:Math.min(p.maxEnergy,p.energy+15)})}]]);}else if(pick===7||pick===8){choicePanel(pick===7?'🍾 Message in a Bottle':'🛟 Rescue Mission',[['Answer a bonus question',()=>{if(!activeQuiz&&!isLineCast&&!classBlocked())openQuizChallenge('narrative','encounter',null)}]]);}else{alertPanel('☀️ HEATWAVE',me.canopy?'Canopy protects your ship!':'Lost 10 energy');if(!me.canopy)syncPlayerUpdate(me.uid,{energy:Math.max(0,me.energy-10)});}return;}
             const names=['THUNDERSTORM','WHIRLPOOL','HEAVY FOG','EXTREME WAVES'];
             seaPending=true;playAlarm();alertPanel('⚠️ '+names[pick],'Bencana tiba dalam 15 detik. Berlindung di pelabuhan atau kehilangan energi!',true,true);
-            const uid=me.uid;setTimeout(()=>{seaPending=false;const p=getMe();if(classBlocked()||!p||p.uid!==uid)return;if(currentLocation==='port'){showToast('Kapal aman di pelabuhan!','success');return;}const damage=[20,15,10,25][pick];syncPlayerUpdate(uid,{energy:Math.max(0,p.energy-damage),updatedAt:Date.now()});alertPanel('🌊 '+names[pick],'-'+damage+' energi',true);},15000);
+            const uid=me.uid;setTimeout(()=>{seaPending=false;const p=getMe();if(classBlocked()||!p||p.uid!==uid)return;if(currentLocation==='port'){showToast('Kapal aman di pelabuhan!','success');return;}const damage=[20,15,10,25][pick];syncPlayerUpdate(uid,{energy:Math.max(0,p.energy-damage),damage:pick===1||pick===3?1:(p.damage||0),updatedAt:Date.now()});alertPanel('🌊 '+names[pick],'-'+damage+' energi',true);},15000);
         }
         window.testSeaAlarm=()=>{unlockAudio();playAlarm();alertPanel('🚨 ALARM TEST','Tes suara darurat.',true);};
     </script>
