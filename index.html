@@ -557,7 +557,7 @@
     </div>
 
     <script>
-        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc,runTransaction;
+        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc,getDocs,runTransaction;
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
@@ -582,7 +582,7 @@
             try {
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
-                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc,runTransaction}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
+                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc,getDocs,runTransaction}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -928,26 +928,20 @@ window.joinMultiplayerRoom = async function() {
 
                     if (unsubscribeRoom) unsubscribeRoom();
                     const roomColRef = collection(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}`);
-                    unsubscribeRoom = onSnapshot(roomColRef, (snapshot) => {
-                        const updatedPlayers = {};
-                        let latestLog = null;
-                        let latestTs = 0;
+                    const joinedRoom=currentRoomCode,joinedUid=myUid;
+                    let stopped=false,refreshBusy=false;
+                    const refreshPeers=async()=>{
+                      if(stopped||refreshBusy||classBlocked())return;
+                      refreshBusy=true;
+                      try{const snap=await getDocs(roomColRef);if(stopped)return;const peers={};snap.forEach(d=>{if(d.id!==joinedUid)peers[d.id]=d.data()});if(roomPlayers[joinedUid])peers[joinedUid]=roomPlayers[joinedUid];roomPlayers=peers;updateAllUI()}catch(e){showToast('Radar refresh failed: '+e.code,'warning')}finally{refreshBusy=false}
+                    };
+                    let ownEvent=0;
+                    const ownStop=onSnapshot(playerDocRef,snap=>{if(stopped||!snap.exists())return;const data=snap.data();roomPlayers[joinedUid]=data;if(data.pvpAt>ownEvent&&data.pvpBy&&data.pvpBy!==joinedUid){ownEvent=data.pvpAt;attackAlert(data.lastEvent||'')}updateAllUI()},err=>showToast('Player sync: '+err.code,'error'));
+                    const radarTimer=setInterval(refreshPeers,600000);
+                    const initialRadar=setTimeout(refreshPeers,15000+Math.random()*15000);
+                    unsubscribeRoom=()=>{stopped=true;ownStop();clearInterval(radarTimer);clearTimeout(initialRadar)};
+                    refreshPeers();
 
-                        snapshot.forEach((docSnap) => {
-                            const data = docSnap.data();
-                            updatedPlayers[docSnap.id] = data;
-                            if (data.updatedAt && data.updatedAt > latestTs && data.lastEvent) {
-                                latestTs = data.updatedAt;
-                                latestLog = data.lastEvent;
-                            }
-                        });
-
-                        roomPlayers = updatedPlayers;
-                        if (latestLog) {
-                            document.getElementById('live-activity-log').textContent = latestLog; attackAlert(latestLog);
-                        }
-                        updateAllUI();
-                    }, (err) => { firestoreEnabled=false; showToast('Sync failed: '+err.code,'error'); });
                 } catch (err) { showToast('Join failed: '+(err.code||err.message),'error'); return; }
             } else {
                 roomPlayers[myUid] = newPlayerState;
@@ -978,7 +972,7 @@ window.joinMultiplayerRoom = async function() {
             const allPlayersList = Object.values(roomPlayers);
 
             document.getElementById('player-count-badge').textContent = "Lobby";
-            document.getElementById('radar-summary-text').textContent = `Total ${allPlayersList.length} Siswa di Laut`;
+            document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 10 min`;
 
             // Top 6 Leaderboard + Current User if outside top 6
             const sortedPlayers = [...allPlayersList].sort((a, b) => (b.coins || 0) - (a.coins || 0));
