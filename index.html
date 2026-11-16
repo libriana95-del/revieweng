@@ -582,8 +582,17 @@
             try {
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
-                ({getFirestore,doc,setDoc,onSnapshot,collection,getDoc,getDocs,runTransaction}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'));
-                app = initializeApp(firebaseConfig);
+                const rtdb=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js');
+                getFirestore=rtdb.getDatabase;
+                const pathOf=parts=>parts[0]==='rooms'?['rooms',...parts.slice(1)].join('/'):['players',...parts.slice(4)].join('/');
+                doc=collection=(db,...parts)=>rtdb.ref(db,pathOf(parts));
+                const normalize=v=>v&&v.uid?{...v,cargo:v.cargo||[],academicTopics:v.academicTopics||{}}:v;
+                const wrap=x=>({id:x.key,exists:()=>x.exists(),data:()=>normalize(x.val()),forEach:fn=>x.forEach(c=>{fn(wrap(c));return false})});
+                getDoc=getDocs=async r=>wrap(await rtdb.get(r));
+                setDoc=(r,v,o)=>o?.merge?rtdb.update(r,v):rtdb.set(r,v);
+                onSnapshot=(r,fn,err)=>rtdb.onValue(r,x=>fn(wrap(x)),err);
+
+                firebaseConfig.databaseURL="https://english-fisher-quest-default-rtdb.asia-southeast1.firebasedatabase.app"; app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -937,7 +946,7 @@ window.joinMultiplayerRoom = async function() {
                     };
                     let ownEvent=0;
                     const ownStop=onSnapshot(playerDocRef,snap=>{if(stopped||!snap.exists())return;const data=snap.data();roomPlayers[joinedUid]=data;if(data.pvpAt>ownEvent&&data.pvpBy&&data.pvpBy!==joinedUid){ownEvent=data.pvpAt;attackAlert(data.lastEvent||'')}updateAllUI()},err=>showToast('Player sync: '+err.code,'error'));
-                    const radarTimer=setInterval(refreshPeers,600000);
+                    const radarTimer=setInterval(refreshPeers,60000);
                     const initialRadar=setTimeout(refreshPeers,15000+Math.random()*15000);
                     unsubscribeRoom=()=>{stopped=true;ownStop();clearInterval(radarTimer);clearTimeout(initialRadar)};
                     refreshPeers();
@@ -972,7 +981,7 @@ window.joinMultiplayerRoom = async function() {
             const allPlayersList = Object.values(roomPlayers);
 
             document.getElementById('player-count-badge').textContent = "Lobby";
-            document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 10 min`;
+            document.getElementById('radar-summary-text').textContent = `Radar: ${allPlayersList.length} captains • refresh 1 min`;
 
             // Top 6 Leaderboard + Current User if outside top 6
             const sortedPlayers = [...allPlayersList].sort((a, b) => (b.coins || 0) - (a.coins || 0));
@@ -1320,7 +1329,7 @@ window.joinMultiplayerRoom = async function() {
         // ==========================================
         const questionHistory={};
 function nextQuestion(pool,topic){const k='efq-bank150-'+(getMe()?.name||getMe()?.uid||'guest');let h=questionHistory[k];if(!h){try{h=JSON.parse(localStorage.getItem(k)||'{}')}catch(e){h={}}questionHistory[k]=h}const ids=pool.map((q,i)=>String(q.id??(topic+'-'+i)));let available=ids.filter(id=>!(h.used||[]).includes(id));const recent=h.recent||[];if(!available.length){h.used=(h.used||[]).filter(id=>!ids.includes(id));available=ids.slice()}const safe=available.filter(id=>!recent.slice(-Math.min(20,ids.length-1)).includes(id));if(safe.length)available=safe;const id=available[Math.floor(Math.random()*available.length)];h.used=[...(h.used||[]),id];h.recent=[...recent,id].slice(-150);try{localStorage.setItem(k,JSON.stringify(h))}catch(e){}const q=pool[ids.indexOf(id)],opts=q.options.map((v,i)=>({v,i}));for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return {...q,options:opts.map(x=>x.v),answer:opts.findIndex(x=>x.i===q.answer)}}
-function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())return;
+function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())return; if(['hijack','steal','sabotage','coop'].includes(actionType)){showToast('PvP temporarily unavailable during database migration','warning');return;}
             const pool = topic.startsWith("cook")?cookBank[Number(topic.slice(4))]:QUESTION_BANK[topic];
             const qObj = nextQuestion(pool,topic);
 
