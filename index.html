@@ -1210,6 +1210,7 @@ window.joinMultiplayerRoom = async function() {
         // 6. HIJACK/SWAP SHIP, STEAL, SABOTAGE & CO-OP
         // ==========================================
         window.openInteractionModal = function(mode) {
+            if(mode==='coop'){showToast('Cooperation is temporarily unavailable','warning');return;}
             const me = getMe();
             if (!me) return;
 
