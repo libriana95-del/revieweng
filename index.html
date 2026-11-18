@@ -557,7 +557,7 @@
     </div>
 
     <script>
-        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc,getDocs,runTransaction;
+        let initializeApp,getAuth,signInAnonymously,signInWithCustomToken,getFirestore,doc,setDoc,onSnapshot,collection,getDoc,getDocs,runTransaction,rtdbApi;
         // ==========================================
         // 0. FIREBASE & LOCAL MULTIPLAYER SETUP
         // ==========================================
@@ -582,7 +582,7 @@
             try {
                 ({initializeApp}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'));
                 ({getAuth,signInAnonymously,signInWithCustomToken}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'));
-                const rtdb=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js');
+                const rtdb=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js');rtdbApi=rtdb;
                 getFirestore=rtdb.getDatabase; window.fisherOffline=()=>rtdb.goOffline(db);
                 const pathOf=parts=>parts[0]==='rooms'?['rooms',...parts.slice(1)].join('/'):['players',...parts.slice(4)].join('/');
                 doc=collection=(db,...parts)=>rtdb.ref(db,pathOf(parts));
@@ -945,10 +945,11 @@ window.joinMultiplayerRoom = async function() {
                       try{const snap=await getDocs(roomColRef);if(stopped)return;const peers={};snap.forEach(d=>{if(d.id!==joinedUid)peers[d.id]=d.data()});if(roomPlayers[joinedUid])peers[joinedUid]=roomPlayers[joinedUid];roomPlayers=peers;updateAllUI()}catch(e){showToast('Radar refresh failed: '+e.code,'warning')}finally{refreshBusy=false}
                     };
                     let ownEvent=0;
+                    const stopPvp=subscribePvpInbox(currentRoomCode,joinedUid);
                     const ownStop=onSnapshot(playerDocRef,snap=>{if(stopped||!snap.exists())return;const data=snap.data();roomPlayers[joinedUid]=data;if(data.pvpAt>ownEvent&&data.pvpBy&&data.pvpBy!==joinedUid){ownEvent=data.pvpAt;attackAlert(data.lastEvent||'')}updateAllUI()},err=>showToast('Player sync: '+err.code,'error'));
                     const radarTimer=setInterval(()=>{if(!document.hidden)refreshPeers()},120000);
                     const initialRadar=setTimeout(refreshPeers,30000+Math.random()*30000);
-                    unsubscribeRoom=()=>{stopped=true;ownStop();clearInterval(radarTimer);clearTimeout(initialRadar)};
+                    unsubscribeRoom=()=>{stopped=true;ownStop();stopPvp();clearInterval(radarTimer);clearTimeout(initialRadar)};
                     refreshPeers();
 
                 } catch (err) { showToast('Join failed: '+(err.code||err.message),'error'); return; }
@@ -1330,7 +1331,7 @@ window.joinMultiplayerRoom = async function() {
         // ==========================================
         const questionHistory={};
 function nextQuestion(pool,topic){const k='efq-bank150-'+(getMe()?.name||getMe()?.uid||'guest');let h=questionHistory[k];if(!h){try{h=JSON.parse(localStorage.getItem(k)||'{}')}catch(e){h={}}questionHistory[k]=h}const ids=pool.map((q,i)=>String(q.id??(topic+'-'+i)));let available=ids.filter(id=>!(h.used||[]).includes(id));const recent=h.recent||[];if(!available.length){h.used=(h.used||[]).filter(id=>!ids.includes(id));available=ids.slice()}const safe=available.filter(id=>!recent.slice(-Math.min(20,ids.length-1)).includes(id));if(safe.length)available=safe;const id=available[Math.floor(Math.random()*available.length)];h.used=[...(h.used||[]),id];h.recent=[...recent,id].slice(-150);try{localStorage.setItem(k,JSON.stringify(h))}catch(e){}const q=pool[ids.indexOf(id)],opts=q.options.map((v,i)=>({v,i}));for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return {...q,options:opts.map(x=>x.v),answer:opts.findIndex(x=>x.i===q.answer)}}
-function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())return; if(['hijack','steal','sabotage','coop'].includes(actionType)){showToast('PvP temporarily unavailable during database migration','warning');return;}
+function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())return; if(actionType==='coop'){showToast('Cooperation is being updated','warning');return;}
             const pool = topic.startsWith("cook")?cookBank[Number(topic.slice(4))]:QUESTION_BANK[topic];
             const qObj = nextQuestion(pool,topic);
 
@@ -1403,21 +1404,78 @@ function openQuizChallenge(topic, actionType, targetUid) { if(classBlocked())ret
         }
 
         
+// PvP requests are stored separately from player records. Each student writes only their own player state.
+const pvpHandled=new Set();
+function pvpRef(...parts){return rtdbApi.ref(db,['pvp',currentRoomCode,...parts].join('/'))}
+function boatSpecs(p){return {boatLevel:p.boatLevel||1,maxCargo:p.maxCargo||5,maxEnergy:p.maxEnergy||100,avatar:p.avatar||'⛵'}}
+function subscribePvpInbox(room,uid){
+ if(!rtdbApi||!db)return ()=>{};
+ const inbox=rtdbApi.ref(db,['pvp',room,uid].join('/'));
+ return rtdbApi.onValue(inbox,snapshot=>{
+  if(classBlocked()||!snapshot.exists())return;
+  snapshot.forEach(senderSnap=>{
+   const sender=senderSnap.key,entry=senderSnap.val()||{},req=entry.request,resp=entry.response;
+   if(!req||!req.id||resp?.id===req.id||pvpHandled.has(req.id))return false;
+   if(!['hijack','steal','sabotage'].includes(req.kind)||!Number.isFinite(req.at)||Math.abs(Date.now()-req.at)>45000)return false;
+   pvpHandled.add(req.id);
+   (async()=>{
+    const me=getMe();if(!me||classBlocked())return;
+    const otherSnap=await getDoc(doc(db,'artifacts',appId,'public','data','room_'+room,sender));
+    if(!otherSnap.exists())return;
+    const attacker=otherSnap.data(),now=Date.now();
+    let patch={},payload={},error='';
+    if(me.guardUntil>now)error='Ship protected by guard';
+    else if(req.kind==='steal'){
+     const cargo=[...(me.cargo||[])],fish=cargo.pop();
+     if(!fish)error='Target has no fish';else{patch.cargo=cargo;payload.fish=fish}
+    }else if(req.kind==='sabotage')patch.energy=Math.max(0,(me.energy||0)-30);
+    else if(req.kind==='hijack'){
+     const aUsed=getUsedCargoSlots(attacker),bUsed=getUsedCargoSlots(me);
+     if(aUsed>(me.maxCargo||5)||bUsed>(attacker.maxCargo||5))error='Sell cargo before swapping ships';
+     else{payload.specs=boatSpecs(me);patch={...boatSpecs(attacker),energy:Math.min(attacker.maxEnergy||100,me.energy||0),hijackedFrom:null}}
+    }
+    const log=({'hijack':'⚔️ '+attacker.name+' membajak kapal '+me.name,'steal':'🏴‍☠️ '+attacker.name+' mencuri ikan dari kapal '+me.name,'sabotage':'💣 '+attacker.name+' menyabotase kapal '+me.name})[req.kind];
+    if(!error){
+     const ok=await syncPlayerUpdate(uid,{...patch,updatedAt:now,lastEvent:log,pvpBy:sender,pvpAt:now,pvpKind:req.kind});
+     if(!ok)error='Could not update target';
+     else attackAlert(log);
+    }
+    await rtdbApi.set(rtdbApi.ref(db,['pvp',room,uid,sender,'response'].join('/')),{id:req.id,kind:req.kind,ok:!error,error,...payload,at:Date.now()});
+   })().catch(e=>console.warn('PvP inbox:',e));
+   return false;
+  });
+ },err=>{console.warn('PvP inbox permission:',err);showToast('PvP requires updated Firebase Rules','warning')});
+}
 async function performPvp(kind,target){
- if(classBlocked()||!firestoreEnabled||target===myUid)throw Error('Unavailable');
- const base=['artifacts',appId,'public','data','room_'+currentRoomCode];
- const ar=doc(db,...base,myUid),br=doc(db,...base,target);
- await runTransaction(db,async tx=>{
- const as=await tx.get(ar),bs=await tx.get(br);if(!as.exists()||!bs.exists())throw Error('Player unavailable');
- const a=as.data(),b=bs.data(),now=Date.now(),cargo=x=>[...(x.cargo||[])],used=x=>x.reduce((n,f)=>n+(f.slots||1),0);
- if(kind!=='coop'&&(b.guardUntil||0)>now)throw Error('Ship protected by guard');
- let ap={},bp={};
- if(kind==='steal'){const bc=cargo(b),ac=cargo(a),fish=bc.pop();if(!fish||used(ac)+fish.slots>a.maxCargo)throw Error('No fish or cargo full');ap.cargo=[...ac,fish];bp.cargo=bc}
- if(kind==='sabotage')bp.energy=Math.max(0,b.energy-30);
- if(kind==='coop'){ap={coins:a.coins+45,energy:Math.min(a.maxEnergy,a.energy+25)};bp={coins:b.coins+45,energy:Math.min(b.maxEnergy,b.energy+25)}}
- if(kind==='hijack'){const specs=x=>({boatLevel:x.boatLevel,maxCargo:x.maxCargo,maxEnergy:x.maxEnergy,avatar:x.avatar});if(used(cargo(a))>b.maxCargo||used(cargo(b))>a.maxCargo)throw Error('Sell cargo before swapping ships');ap={...specs(b),energy:Math.min(b.maxEnergy,a.energy),hijackedFrom:b.name};bp={...specs(a),energy:Math.min(a.maxEnergy,b.energy),hijackedFrom:null}}
- const log=({'hijack':'⚔️ '+a.name+' membajak kapal '+b.name,'steal':'🏴‍☠️ '+a.name+' mencuri ikan dari kapal '+b.name,'sabotage':'💣 '+a.name+' menyabotase kapal '+b.name,'coop':'🤝 '+a.name+' & '+b.name+' kerja sama'})[kind];
- tx.update(ar,{...ap,updatedAt:now,pvpAt:now,pvpTarget:target,pvpKind:kind});tx.update(br,{...bp,updatedAt:now,lastEvent:log,pvpBy:myUid,pvpAt:now,pvpKind:kind});
+ if(classBlocked()||!firestoreEnabled||!rtdbApi||target===myUid)throw Error('Unavailable');
+ if(!['hijack','steal','sabotage'].includes(kind))throw Error('Not yet available');
+ const id=myUid+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+ const base=pvpRef(target,myUid),reqRef=rtdbApi.child(base,'request'),resRef=rtdbApi.child(base,'response');
+ // Remove the previous response before publishing a new request.
+ await rtdbApi.remove(resRef);
+ return new Promise((resolve,reject)=>{
+  let finished=false,stop=()=>{},timer;
+  const finish=(err)=>{if(finished)return;finished=true;clearTimeout(timer);stop();err?reject(err):resolve()};
+  timer=setTimeout(()=>finish(Error('Target offline or no response within 25 seconds')),25000);
+  stop=rtdbApi.onValue(resRef,async snap=>{
+   const res=snap.val();if(!res||res.id!==id||finished)return;
+   if(!res.ok)return finish(Error(res.error||'Attack rejected'));
+   try{
+    const me=getMe();if(!me||classBlocked())throw Error('Session unavailable');
+    let patch={pvpAt:Date.now(),pvpTarget:target,pvpKind:kind,updatedAt:Date.now()};
+    if(kind==='steal'){
+     const fish=res.fish,cargo=[...(me.cargo||[])];
+     if(!fish||getUsedCargoSlots(me)+(fish.slots||1)>(me.maxCargo||5))throw Error('Cargo full: target already lost a fish; notify teacher');
+     patch.cargo=[...cargo,fish];
+    }else if(kind==='hijack'){
+     if(!res.specs)throw Error('Missing ship data');
+     patch={...patch,...res.specs,energy:Math.min(res.specs.maxEnergy||100,me.energy||0),hijackedFrom:roomPlayers[target]?.name||'another captain'};
+    }
+    if(!await syncPlayerUpdate(myUid,patch))throw Error('Could not save attack result');
+    finish();
+   }catch(e){finish(e)}
+  },e=>finish(Error('PvP response access denied: '+(e.code||e.message))));
+  rtdbApi.set(reqRef,{id,kind,at:Date.now()}).catch(finish);
  });
 }
 
